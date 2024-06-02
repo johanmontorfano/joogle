@@ -9,6 +9,7 @@
     - [ ] Trustworthy scores with hyperlinks.
     - [ ] Saving indexed pages and titles.
     - [ ] Solve an issue with data not being resetted on re-indexing.
+    - [ ] Better algorithm for page scoring based on content.
 - [ ] Search improvements
     - [ ] Implement result pagination instead of the 100's result limit.
 
