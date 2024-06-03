@@ -10,7 +10,8 @@
     - [ ] Trustworthy scores with hyperlinks.
     - [ ] Saving indexed pages description and title.
     - [X] Solve an issue with data not being resetted on re-indexing.
-    - [ ] Better algorithm for page scoring based on content.
+    - [X] Better algorithm for page scoring based on content.
+    - [ ] Scoring based on external links.
     - [ ] Use robots.txt and sitemaps, allowing to only submit a domain name and
         a sitemap URL to the indexer and the bot will do everything by itself.
 - [ ] Search improvements
