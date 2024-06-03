@@ -6,10 +6,13 @@
 
 - [X] Working indexing and searching.
 - [ ] Indexing improvements
+    - [ ] Auto-queueing of URLs found on webpages.
     - [ ] Trustworthy scores with hyperlinks.
-    - [ ] Saving indexed pages and titles.
-    - [ ] Solve an issue with data not being resetted on re-indexing.
+    - [ ] Saving indexed pages description and title.
+    - [X] Solve an issue with data not being resetted on re-indexing.
     - [ ] Better algorithm for page scoring based on content.
+    - [ ] Use robots.txt and sitemaps, allowing to only submit a domain name and
+        a sitemap URL to the indexer and the bot will do everything by itself.
 - [ ] Search improvements
     - [ ] Implement result pagination instead of the 100's result limit.
 
@@ -22,7 +25,6 @@ Indexing happens by giving a website a score for each word it contains, hence:
 - A word have a score defined by `n` as the number of occurences of this word.
 - A word present in the title has it's score multiplied by 10.
 - A word present in the description has it's score multiplied by 5.
-- A word shorter than 3 characters is not considered.
 
 Each word found is lowercased before processing, and word scoring for a specific
 website is stored in a SQL database such as, for the **TABLE OF WORD X**:

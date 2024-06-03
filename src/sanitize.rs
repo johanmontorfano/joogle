@@ -9,7 +9,6 @@ pub fn sanitize_string<T: std::fmt::Display>(s: T) -> Vec<String> {
 
     re.split(&s)
         .filter(|w| !w.is_empty())
-        .filter(|w| w.len() > 2)
         .map(|w| w.to_string())
         .collect()
 }

@@ -2,7 +2,7 @@ use regex::Regex;
 use rusqlite::params;
 use std::collections::HashMap;
 use scraper::{ElementRef, Html, Selector};
-use crate::{sanitize::sanitize_string, DB_POOL};
+use crate::{db, sanitize::sanitize_string, DB_POOL};
 
 /// Extract all texts from a root element.
 pub fn get_all_texts(from: ElementRef) -> Vec<String> {
@@ -69,18 +69,22 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
     let desc_selector = Selector::parse("meta[name='description']").unwrap();
     let some_selector = Selector::parse("p, h1, h2, h3, h4, h5, span").unwrap();
 
+    let mut final_title = String::from("unnamed");
+    let mut final_desc = String::from("No description.");
+
     // INFO: To get the first element out of a DOM selector, you somehow have to
     // call `next`.
-
     if let Some(title) = dom.select(&title_selector).next() {
         let title_content = title.first_child().unwrap()
             .value().as_text().unwrap()
             .to_string();
-        scoreboard.incr_score(vec![title_content], 10);
+        scoreboard.incr_score(vec![title_content.clone()], 10);
+        final_title = title_content;
     }
     if let Some(desc) = dom.select(&desc_selector).next() {
         let desc_content = desc.attr("content").unwrap().to_string();
-        scoreboard.incr_score(vec![desc_content], 5);
+        scoreboard.incr_score(vec![desc_content.clone()], 5);
+        final_desc = desc_content;
     }
     let p_content = dom.select(&some_selector)
         .into_iter()
@@ -88,26 +92,20 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
         .flatten()
         .collect::<Vec<_>>();
 
+    // We create a record of the current url on the database for later linking.
+    db::sites::new_url_record(url.clone(), final_title, final_desc)?;
     scoreboard.incr_score(p_content, 1);
+    // For each word, we link the current website to the word's table with it's
+    // score with this word.
     scoreboard.words
         .keys()
         .for_each(|word| {
-            
-            // INFO: To make sure no data is overwritten, we increment score
-            // from previous calls when indexing. This may cause issues on 
-            // reindexing.
-            // TODO: Create a `flush_previous_index_data` function.
-            
             let score = scoreboard.words.get(word).unwrap();
-            if let Err(error) = conn.execute_batch(&format!("
-                BEGIN;
-                CREATE TABLE IF NOT EXISTS _{word} (url text PRIMARY KEY, score int);
-                INSERT OR IGNORE INTO _{word} (URL, score) VALUES ('{url}', 0);
-                UPDATE _{word} SET score = score + {score} WHERE url = '{url}';
-                COMMIT;
-            ")) {
-                println!("Insertion error: {}", error.to_string());
-            }
+            let _ = db::_word::save_word_score(
+                url.clone(), 
+                word.clone(), 
+                *score
+            );
         });
     Ok(())
 }

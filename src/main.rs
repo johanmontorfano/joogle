@@ -2,6 +2,7 @@ mod indexing;
 mod sanitize;
 mod searching;
 mod templates;
+mod db;
 
 extern crate r2d2;
 extern crate r2d2_sqlite;
@@ -51,6 +52,7 @@ async fn index_websites(url_list: Json<Vec<String>>) -> Markup {
 
 #[launch]
 fn rocket() -> _ {
+    db::sites::init_table().expect("Failed to init 'sites' table.");
     rocket::build()
         .mount("/", routes![index_websites, search_query, search_default_ui])
         .mount("/static", FileServer::from(relative!("/static")))

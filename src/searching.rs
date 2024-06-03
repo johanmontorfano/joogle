@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use crate::{sanitize::sanitize_string, DB_POOL};
 
-const QUERY_SIZE_LIMIT: usize = 100;
-
 /// From a HashMap<String, usize>, this function returns the keys ordered by 
 /// their descending corresponding value.
 fn get_desc_hash_map_keys(from: &mut HashMap<String, usize>) -> Vec<String> {
@@ -26,10 +24,11 @@ pub fn feeling_lucky(query: String) -> Vec<String> {
     // TODO: If pagination can be implemented, it should be implemented here
     // to remove this query size limit.
     sanitized_query.iter().for_each(|w| {
-        let select_stmt = conn
-            .prepare(&format!("SELECT url, score FROM _{w} 
-                              ORDER BY score DESC
-                              LIMIT {QUERY_SIZE_LIMIT}"));
+        let select_stmt = conn.prepare(&format!("
+            SELECT url, score FROM _{w} 
+            ORDER BY score DESC
+            LIMIT 100
+        "));
         if select_stmt.is_err() {
             return ();
         }
