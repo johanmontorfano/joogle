@@ -1,6 +1,3 @@
-use r2d2::PooledConnection;
-use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::Statement;
 use crate::DB_POOL;
 
 /// Initalizes a table for a word in case it doesn't exists and adds an URL's

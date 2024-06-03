@@ -3,9 +3,9 @@ use crate::{sanitize::sanitize_string, DB_POOL};
 
 /// From a HashMap<String, usize>, this function returns the keys ordered by 
 /// their descending corresponding value.
-fn get_desc_hash_map_keys(from: &mut HashMap<String, usize>) -> Vec<String> {
-    let mut vec: Vec<(&String, &usize)> = from.iter().collect();
-    vec.sort_by(|a, b| b.1.cmp(a.1));
+fn get_desc_hash_map_keys(from: &mut HashMap<String, f64>) -> Vec<String> {
+    let mut vec: Vec<(&String, &f64)> = from.iter().collect();
+    vec.sort_by(|a, b| b.1.total_cmp(a.1));
     vec.into_iter().map(|(key, _)| key.clone()).collect()
 }
 
@@ -52,5 +52,23 @@ pub fn feeling_lucky(query: String) -> Vec<String> {
         });
     });
 
-    get_desc_hash_map_keys(&mut scoreboard)
+    // We load each website TTR score and multiply it's query dependant score by
+    // it.
+    let mut final_scoreboard = scoreboard.keys().into_iter().map(|url| {
+        let mut select_stmt = conn.prepare(&format!("
+            SELECT ttr FROM sites
+            WHERE url = '{url}'
+        ")).unwrap();
+        let site_ttr_list = select_stmt
+            .query_map([], |row| Ok(row.get::<usize, f64>(0).unwrap()))
+            .unwrap()
+            .map(|r| r.unwrap())
+            .collect::<Vec<f64>>();
+        let site_ttr = site_ttr_list.get(0).unwrap();
+        let site_score = scoreboard.get(url).unwrap();
+
+        (url.clone(), (*site_score as f64) * site_ttr) 
+    }).collect::<HashMap<String, f64>>();
+
+    get_desc_hash_map_keys(&mut final_scoreboard)
 }

@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use scraper::{ElementRef, Html, Selector};
-use crate::{db, sanitize::sanitize_string, DB_POOL};
+use crate::{db, sanitize::sanitize_string};
 
 /// Extract all texts from a root element.
 pub fn get_all_texts(from: ElementRef) -> Vec<String> {
