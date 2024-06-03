@@ -1,7 +1,9 @@
 use maud::{html, Markup, DOCTYPE};
 
 /// Renders the search result page.
-pub fn search_result_page(query: String, results: Vec<String>) -> Markup {
+pub fn search_result_page(
+    query: String, results: Vec<(String, String, String)>
+) -> Markup {
     html! {
         (DOCTYPE)
         head {
@@ -19,8 +21,13 @@ pub fn search_result_page(query: String, results: Vec<String>) -> Markup {
                 }
             }
             div id="results" {
-                @for url in results {
-                    a href=(url) { (url) }
+                @for (url, title, desc) in results {
+                    div {
+                        a href=(url) {
+                            (title)
+                        }
+                        span { (desc) }
+                    }
                 }
             }
         }

@@ -3,17 +3,21 @@ use crate::{sanitize::sanitize_string, DB_POOL};
 
 /// From a HashMap<String, usize>, this function returns the keys ordered by 
 /// their descending corresponding value.
-fn get_desc_hash_map_keys(from: &mut HashMap<String, f64>) -> Vec<String> {
-    let mut vec: Vec<(&String, &f64)> = from.iter().collect();
-    vec.sort_by(|a, b| b.1.total_cmp(a.1));
-    vec.into_iter().map(|(key, _)| key.clone()).collect()
+fn get_desc_hash_map_keys(
+    from: &mut HashMap<String, (f64, String, String)>
+) -> Vec<(String, String, String)> {
+    let mut vec: Vec<(&String, &(f64, String, String))> = from.iter().collect();
+    vec.sort_by(|a, b| b.1.0.total_cmp(&a.1.0));
+    vec.into_iter()
+        .map(|(key, data)| (key.clone(), data.1.clone(), data.2.clone()))
+        .collect()
 }
 
 /// Find matching results for a specific query by decomposing a query string 
 /// into a list of words, and looking at which websites have the best cumulative
 /// score.
 /// INFO: This technique is meant to change, read the README to learn more.
-pub fn feeling_lucky(query: String) -> Vec<String> {
+pub fn feeling_lucky(query: String) -> Vec<(String, String, String)> {
     let mut scoreboard: HashMap<String, usize> = HashMap::new();
     let sanitized_query = sanitize_string(query);
     let conn = DB_POOL.clone().get().unwrap();
@@ -25,7 +29,7 @@ pub fn feeling_lucky(query: String) -> Vec<String> {
     // to remove this query size limit.
     sanitized_query.iter().for_each(|w| {
         let select_stmt = conn.prepare(&format!("
-            SELECT url, score FROM _{w} 
+            SELECT url, score FROM w_{w} 
             ORDER BY score DESC
             LIMIT 100
         "));
@@ -56,19 +60,30 @@ pub fn feeling_lucky(query: String) -> Vec<String> {
     // it.
     let mut final_scoreboard = scoreboard.keys().into_iter().map(|url| {
         let mut select_stmt = conn.prepare(&format!("
-            SELECT ttr FROM sites
+            SELECT ttr, title, description FROM sites
             WHERE url = '{url}'
         ")).unwrap();
-        let site_ttr_list = select_stmt
-            .query_map([], |row| Ok(row.get::<usize, f64>(0).unwrap()))
+        let site_list = select_stmt
+            .query_map([], |row| Ok((
+                row.get::<usize, f64>(0).unwrap(),
+                row.get::<usize, String>(1).unwrap(),
+                row.get::<usize, String>(2).unwrap()
+            )))
             .unwrap()
             .map(|r| r.unwrap())
-            .collect::<Vec<f64>>();
-        let site_ttr = site_ttr_list.get(0).unwrap();
+            .collect::<Vec<(f64, String, String)>>();
+        let site_data = site_list.get(0).unwrap();
         let site_score = scoreboard.get(url).unwrap();
 
-        (url.clone(), (*site_score as f64) * site_ttr) 
-    }).collect::<HashMap<String, f64>>();
+        (
+            url.clone(), 
+            (
+                (*site_score as f64) * site_data.0, 
+                site_data.1.clone(), 
+                site_data.2.clone()
+            )
+        ) 
+    }).collect::<HashMap<String, (f64, String, String)>>();
 
     get_desc_hash_map_keys(&mut final_scoreboard)
 }
