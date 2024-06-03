@@ -43,6 +43,10 @@ div#results {
     flex-direction: column;
 }
 
-div#results > a {
+div#results > div > a {
     font-size: large;
+}
+
+div#results > div {
+    padding-top: 10px;
 }

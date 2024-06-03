@@ -26,7 +26,7 @@ pub fn search_result_page(
                         a href=(url) {
                             (title)
                         }
-                        span { (desc) }
+                        p { (desc) }
                     }
                 }
             }
