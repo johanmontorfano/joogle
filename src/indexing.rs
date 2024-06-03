@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}, sync::{Arc, Mutex}, thread, time::{SystemTime, UNIX_EPOCH}};
 use tokio::runtime::Runtime;
 use scraper::{ElementRef, Html, Selector};
-use crate::{db, sanitize::sanitize_string};
+use crate::{db, sanitize::sanitize_string, QUEUE_BOT};
 
 /// Extract all texts from a root element.
 pub fn get_all_texts(from: ElementRef) -> Vec<String> {
@@ -88,6 +88,7 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
     let title_selector = Selector::parse("title").unwrap();
     let desc_selector = Selector::parse("meta[name='description']").unwrap();
     let p_selector = Selector::parse("p, span").unwrap();
+    let a_selector = Selector::parse("a").unwrap();
     let h1_selector = Selector::parse("h1").unwrap();
     let h2_selector = Selector::parse("h2").unwrap();
     let h3_selector = Selector::parse("h3").unwrap();
@@ -120,6 +121,18 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
     scoreboard.incr_score_selector(&dom, h3_selector, 7);
     scoreboard.incr_score_selector(&dom, h4_selector, 5);
     scoreboard.incr_score_selector(&dom, h5_selector, 3);
+
+    // We find other URLs we could index.
+    // WARN: We do not check for links integrity here.
+    // TODO: This should be implemented asap.
+    let new_links = dom.select(&a_selector)
+        .into_iter()
+        .map(|a| a.attr("href"))
+        .filter(|r| r.is_some())
+        .map(|a| a.unwrap().to_string())
+        .collect::<Vec<String>>();
+    println!("Found automatically {} links to index.", new_links.len());
+    QUEUE_BOT.queue_url(new_links);
 
     // For each word, we link the current website to the word's table with it's
     // score with this word.

@@ -6,7 +6,9 @@
 
 - [X] Working indexing and searching.
 - [ ] Indexing improvements
-    - [ ] Auto-queueing of URLs found on webpages.
+    - [X] ⚠️ Auto-queueing of URLs found on webpages.
+        - [ ] Verify `href` values ARE links.
+        - [ ] Transform relative links into absolute links.
     - [X] Saving indexed pages description and title.
     - [X] Solve an issue with data not being resetted on re-indexing.
     - [X] Better algorithm for page scoring based on content.
