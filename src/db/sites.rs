@@ -6,9 +6,10 @@ pub fn init_table() -> Result<(), Box<dyn std::error::Error>> {
 
     conn.execute("
         CREATE TABLE IF NOT EXISTS sites (
-            url text PRIMARY KEY,
-            title text,
-            description text
+            url TEXT PRIMARY KEY,
+            title TEXT,
+            description TEXT,
+            ttr REAL
         )
     ", [])?;
     Ok(())
@@ -29,9 +30,21 @@ pub fn new_url_record(
         BEGIN;
         DELETE FROM sites WHERE url = '{url}';
         INSERT INTO sites (url, title, description) VALUES (
-            '{url}', '{title}', '{description}'
+            '{url}', '{title}', '{description}', 0.0
         );
         COMMIT;
     "))?;
+    Ok(())
+}
+
+/// Updates the Type-Token Ratio of a site.
+pub fn update_site_ttr(
+    url: String, ttr: f64
+) -> Result<(), Box<dyn std::error::Error>> {
+    let conn = DB_POOL.clone().get().unwrap();
+
+    conn.execute(
+        &format!("UPDATE sites SET ttr = {ttr} WHERE url = '{url}'"), []
+    )?;
     Ok(())
 }
