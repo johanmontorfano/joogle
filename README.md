@@ -7,7 +7,7 @@
 - [X] Working indexing and searching.
 - [ ] Indexing improvements
     - [ ] Auto-queueing of URLs found on webpages.
-    - [ ] Saving indexed pages description and title.
+    - [X] Saving indexed pages description and title.
     - [X] Solve an issue with data not being resetted on re-indexing.
     - [X] Better algorithm for page scoring based on content.
     - [ ] Scoring based on external links.
