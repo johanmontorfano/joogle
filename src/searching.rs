@@ -18,7 +18,7 @@ fn get_desc_hash_map_keys(
 /// score.
 /// INFO: This technique is meant to change, read the README to learn more.
 pub fn feeling_lucky(query: String) -> Vec<(String, String, String)> {
-    let mut scoreboard: HashMap<String, usize> = HashMap::new();
+    let mut scoreboard: HashMap<String, (f64, String, String)> = HashMap::new();
     let sanitized_query = sanitize_string(query);
     let conn = DB_POOL.clone().get().unwrap();
 
@@ -29,61 +29,40 @@ pub fn feeling_lucky(query: String) -> Vec<(String, String, String)> {
     // to remove this query size limit.
     sanitized_query.iter().for_each(|w| {
         let select_stmt = conn.prepare(&format!("
-            SELECT url, score FROM w_{w} 
-            ORDER BY score DESC
+            SELECT w_{w}.url, w_{w}.score, sites.ttr, sites.title, sites.description 
+            FROM w_{w} 
+            INNER JOIN sites ON w_{w}.url = sites.url
+            ORDER BY w_{w}.score DESC
             LIMIT 100
         "));
         if select_stmt.is_err() {
+            println!("{:?}", select_stmt.err());
             return ();
         }
 
         let mut select_stmt = select_stmt.unwrap();
         let score_iter = select_stmt.query_map([], |row| Ok((
             row.get::<usize, String>(0).unwrap(), 
-            row.get::<usize, usize>(1).unwrap()
+            row.get::<usize, usize>(1).unwrap(),
+            row.get::<usize, f64>(2).unwrap(),
+            row.get::<usize, String>(3).unwrap(),
+            row.get::<usize, String>(4).unwrap()
         ))).unwrap();
 
         score_iter.for_each(|row| {
-            let (url, score) = row.unwrap();
+            let (url, score, ttr, title, desc) = row.unwrap();
+            let score = score as f64;
+
             if scoreboard.contains_key(&url) {
                 scoreboard.insert(
                     url.clone(), 
-                    scoreboard.get(&url).unwrap() + score
+                    (scoreboard.get(&url).unwrap().0 + score * ttr, title, desc)
                 );
             } else {
-                scoreboard.insert(url.clone(), score);
+                scoreboard.insert(url.clone(), (score * ttr, title, desc));
             }
         });
     });
 
-    // We load each website TTR score and multiply it's query dependant score by
-    // it.
-    let mut final_scoreboard = scoreboard.keys().into_iter().map(|url| {
-        let mut select_stmt = conn.prepare(&format!("
-            SELECT ttr, title, description FROM sites
-            WHERE url = '{url}'
-        ")).unwrap();
-        let site_list = select_stmt
-            .query_map([], |row| Ok((
-                row.get::<usize, f64>(0).unwrap(),
-                row.get::<usize, String>(1).unwrap(),
-                row.get::<usize, String>(2).unwrap()
-            )))
-            .unwrap()
-            .map(|r| r.unwrap())
-            .collect::<Vec<(f64, String, String)>>();
-        let site_data = site_list.get(0).unwrap();
-        let site_score = scoreboard.get(url).unwrap();
-
-        (
-            url.clone(), 
-            (
-                (*site_score as f64) * site_data.0, 
-                site_data.1.clone(), 
-                site_data.2.clone()
-            )
-        ) 
-    }).collect::<HashMap<String, (f64, String, String)>>();
-
-    get_desc_hash_map_keys(&mut final_scoreboard)
+    get_desc_hash_map_keys(&mut scoreboard)
 }
