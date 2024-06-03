@@ -1,4 +1,5 @@
-use std::collections::{HashMap, HashSet};
+use std::{collections::{HashMap, HashSet}, sync::{Arc, Mutex}, thread, time::{SystemTime, UNIX_EPOCH}};
+use tokio::runtime::Runtime;
 use scraper::{ElementRef, Html, Selector};
 use crate::{db, sanitize::sanitize_string};
 
@@ -138,4 +139,68 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
     db::sites::update_site_ttr(url, scoreboard.get_ttr())?;
 
     Ok(())
+}
+
+/// The `QueueBot` will manage links to index by creating a queue of every 
+/// website that should be indexed on a separate thread and with a separate
+/// database connection.
+pub struct QueueBot {
+    queue: Arc<Mutex<Vec<String>>>
+}
+
+unsafe impl Send for QueueBot {}
+unsafe impl Sync for QueueBot {}
+
+impl QueueBot {
+    pub fn init() -> Self {
+        Self { queue: Arc::new(Mutex::new(vec![])) }
+    }
+
+    pub fn queue_url(&self, urls: Vec<String>) {
+        let mut queue = self.queue.lock().unwrap();
+        urls.iter().for_each(|url| {
+            queue.push(url.into());
+        });
+    }
+
+    pub fn thread_bot(&self) {
+        let queue_clone = self.queue.clone();
+        thread::spawn(move || {
+            let rt = Runtime::new().unwrap();
+            let mut total_processed_urls: u128 = 0;
+            let mut total_processing_rate: u128 = 0;
+
+            loop {
+                let mut queue: Vec<String> = vec![];
+
+                // We free the shared queue and drop it to make it available
+                // as soon as possible.
+                {
+                    let mut guard = queue_clone.lock().unwrap();
+                    std::mem::swap(&mut queue, &mut *guard);
+                }
+                for url in queue {
+                    let start_at = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis();
+                    rt.block_on(async {
+                        println!("Indexing: {url}");
+                        let msg = match index_url(url.clone()).await {
+                            Ok(_) => format!("Indexed: {url}"),
+                            Err(err) => format!("Error: {url} -> {err}")
+                        };
+                        println!("{msg}");
+                    });
+                    total_processed_urls += 1;
+                    total_processing_rate += SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis() - start_at;
+                    println!("Current speed: 1url/{}ms", 
+                             total_processing_rate / total_processed_urls);
+                }
+            }
+        });
+    }
 }
