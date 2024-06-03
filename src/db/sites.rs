@@ -29,7 +29,7 @@ pub fn new_url_record(
     conn.execute_batch(&format!("
         BEGIN;
         DELETE FROM sites WHERE url = '{url}';
-        INSERT INTO sites (url, title, description) VALUES (
+        INSERT INTO sites (url, title, description, ttr) VALUES (
             '{url}', '{title}', '{description}', 0.0
         );
         COMMIT;
