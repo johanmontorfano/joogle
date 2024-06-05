@@ -21,6 +21,9 @@
 - [ ] Search improvements
     - [ ] Implement result pagination instead of the 100's result limit.
     - [ ] Implement localization segregated search.
+- [ ] Debug
+    - [ ] Improve the way the `routes!` macro is used with debug routes.
+    - [X] Prevent compiling to production with `debug` features enabled.
 
 ## Indexing
 

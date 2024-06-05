@@ -6,7 +6,7 @@ edition = "2021"
 [features]
 default = ["auto_queue", "debug"]
 auto_queue = []
-debug = []
+debug = ["auto_queue"]
 
 [dependencies]
 lazy_static = "1.4.0"
