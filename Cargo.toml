@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["auto_queue"]
+default = ["auto_queue", "debug"]
 auto_queue = []
+debug = []
 
 [dependencies]
 lazy_static = "1.4.0"

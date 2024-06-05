@@ -1,9 +1,12 @@
-use std::{collections::{HashMap, HashSet}, sync::{Arc, Mutex}, thread, time::{Duration, SystemTime, UNIX_EPOCH}};
-use rocket::form::validate::Len;
+use std::{
+    collections::{HashMap, HashSet}, 
+    sync::{Arc, Mutex}, 
+    thread, 
+    time::{Duration, SystemTime, UNIX_EPOCH}};
 use tokio::runtime::Runtime;
 use scraper::{ElementRef, Html, Selector};
 use url::Url;
-use crate::{db, sanitize::sanitize_string, QUEUE_BOT};
+use crate::{db, debug::gatherers::TimingGatherer, ifcfg, sanitize::sanitize_string, QUEUE_BOT};
 
 /// Extract all texts from a root element.
 pub fn get_all_texts(from: ElementRef) -> Vec<String> {
@@ -165,7 +168,8 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
 /// website that should be indexed on a separate thread and with a separate
 /// database connection.
 pub struct QueueBot {
-    queue: Arc<Mutex<Vec<String>>>
+    queue: Arc<Mutex<Vec<String>>>,
+    pub is_paused: Arc<Mutex<bool>>
 }
 
 unsafe impl Send for QueueBot {}
@@ -173,7 +177,10 @@ unsafe impl Sync for QueueBot {}
 
 impl QueueBot {
     pub fn init() -> Self {
-        Self { queue: Arc::new(Mutex::new(vec![])) }
+        Self { 
+            queue: Arc::new(Mutex::new(vec![])), 
+            is_paused: Arc::new(Mutex::new(false))
+        }
     }
 
     /// This function MUST be called when auto-queuing to ensure only correcly
@@ -204,25 +211,33 @@ impl QueueBot {
     /// Starts parallel indexing.
     pub fn thread_bot(&self) {
         let queue_clone = self.queue.clone();
+        let is_paused_clone = self.is_paused.clone();
+
         thread::spawn(move || {
             let rt = Runtime::new().unwrap();
-            let mut total_processed_urls: u128 = 0;
-            let mut total_processing_rate: u128 = 0;
+            let mut time_gatherer = { ifcfg!("debug", TimingGatherer::init()) };
 
             loop {
                 let mut queue: Vec<String> = vec![];
 
+                ifcfg!("debug", time_gatherer.start_gathering());
+                if *is_paused_clone.lock().unwrap() {
+                    println!("QueueBot paused for 5 more seconds...");
+                    thread::sleep(Duration::from_secs(5));
+                    continue;
+                }
                 // We free the shared queue and drop it to make it available
                 // as soon as possible.
                 {
                     let mut guard = queue_clone.lock().unwrap();
                     std::mem::swap(&mut queue, &mut *guard);
                 }
-                for url in queue {
-                    let start_at = SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap()
-                        .as_millis();
+                for url in &queue {
+                    if *is_paused_clone.lock().unwrap() {
+                        let mut guard = queue_clone.lock().unwrap();
+                        std::mem::swap(&mut *guard, &mut queue);
+                        break;
+                    }
                     rt.block_on(async {
                         println!("Indexing: {url}");
                         let msg = match index_url(url.clone()).await {
@@ -231,13 +246,8 @@ impl QueueBot {
                         };
                         println!("{msg}");
                     });
-                    total_processed_urls += 1;
-                    total_processing_rate += SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap()
-                        .as_millis() - start_at;
-                    println!("1 url / {} ms", 
-                             total_processing_rate / total_processed_urls);
+                    ifcfg!("debug", time_gatherer.action_done());
+                    ifcfg!("debug", time_gatherer.log_gathered_data());
                 }
             }
         });
