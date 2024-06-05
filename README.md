@@ -39,10 +39,10 @@ Indexing happens by giving a website a score for each word it contains, hence:
 Each word found is lowercased before processing, and word scoring for a specific
 website is stored in a SQL database such as, for the **TABLE OF WORD X**:
 
-| URL            | SCORE |
-| -------------- | ----- |
-| www.google.com |   128 |
-| 128.0.0.2      |    16 |
+| URL                 | SCORE |
+| ------------------- | ----- |
+| www.google.com      |   128 |
+| 128.0.0.2           |    16 |
 
 A Type-Token Ratio is also calculated and added to a table where data about the
 url is stored. It allows to have an idea of the page quality.
