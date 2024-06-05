@@ -6,7 +6,7 @@
 
 - [X] Working indexing and searching.
 - [ ] Indexing improvements
-    - [X] ⚠️ Auto-queueing of URLs found on webpages.
+    - [X] Auto-queueing of URLs found on webpages.
         - [X] Verify `href` values ARE links.
         - [X] Transform relative links into absolute links.
         - [X] Understand why the database fails when auto-queuing websites with
