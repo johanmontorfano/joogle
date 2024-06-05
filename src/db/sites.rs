@@ -1,9 +1,5 @@
 use crate::DB_POOL;
-
-/// Escape ' to avoid issues on SQL insertion.
-fn sql_escape(item: String) -> String {
-    item.replace("'", "''")
-}
+use crate::sanitize::sql_escape_ap;
 
 /// Initialize this table if it does not exists on the database.
 pub fn init_table() -> Result<(), Box<dyn std::error::Error>> {
@@ -30,9 +26,9 @@ pub fn new_url_record(
     description: String
 ) -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
-    let url = sql_escape(url);
-    let title = sql_escape(title);
-    let description = sql_escape(description);
+    let url = sql_escape_ap(url);
+    let title = sql_escape_ap(title);
+    let description = sql_escape_ap(description);
 
     conn.execute(&format!("DELETE FROM sites WHERE url = '{url}'"), [])?;
     conn.execute(&format!("
@@ -48,7 +44,7 @@ pub fn update_site_ttr(
     url: String, ttr: f64
 ) -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
-    let url = sql_escape(url);
+    let url = sql_escape_ap(url);
 
     conn.execute(
         &format!("UPDATE sites SET ttr = {ttr} WHERE url = '{url}'"), []

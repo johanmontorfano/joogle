@@ -12,3 +12,10 @@ pub fn sanitize_string<T: std::fmt::Display>(s: T) -> Vec<String> {
         .map(|w| w.to_string())
         .collect()
 }
+
+/// Escape ' to avoid issues on SQL insertion.
+pub fn sql_escape_ap(item: String) -> String {
+    item.replace("'", "''")
+}
+
+
