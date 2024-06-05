@@ -21,6 +21,7 @@ use rocket::{fs::{FileServer, relative}, serde::json::Json};
 use searching::feeling_lucky;
 use templates::{indexing::indexing_page, search::search_result_page};
 use indexing::QueueBot;
+use debug::routes::toggle_queue_bot;
 
 lazy_static! {
     static ref DB_POOL: r2d2::Pool<r2d2_sqlite::SqliteConnectionManager> = {
@@ -53,16 +54,6 @@ async fn index_websites(url_list: Json<Vec<String>>) -> Markup {
     indexing_page()
 }
 
-#[cfg(feature = "auto_queue")]
-#[cfg(feature = "debug")]
-#[post("/queue_bot?<enabled>")]
-fn queue_bot_enabling(enabled: bool) -> Markup {
-    use maud::html;
-
-    *QUEUE_BOT.is_paused.lock().unwrap() = enabled;
-    html! { p {("Changes will take effect soon...")} }
-}
-
 #[launch]
 fn rocket() -> _ {
     db::sites::init_table().expect("Failed to init 'sites' table.");
@@ -74,7 +65,7 @@ fn rocket() -> _ {
         .mount(
             "/debug",
             if cfg!(feature = "debug") {
-                routes![queue_bot_enabling]
+                routes![toggle_queue_bot]
             } else {
                 routes![]
             }
