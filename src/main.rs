@@ -22,7 +22,10 @@ use indexing::QueueBot;
 lazy_static! {
     static ref DB_POOL: r2d2::Pool<r2d2_sqlite::SqliteConnectionManager> = {
         let manager = SqliteConnectionManager::file("index_db.db")
-            .with_init(|c| c.execute_batch("PRAGMA synchronous = 3;"));
+            .with_init(|c| c.execute_batch("
+                PRAGMA synchronous = 3;
+                PRAGMA encoding = 'UTF-16';
+            "));
         Pool::new(manager).unwrap()
     };
     static ref QUEUE_BOT: indexing::QueueBot = {

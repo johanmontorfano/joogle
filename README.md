@@ -9,7 +9,7 @@
     - [X] ⚠️ Auto-queueing of URLs found on webpages.
         - [X] Verify `href` values ARE links.
         - [X] Transform relative links into absolute links.
-        - [ ] Understand why the database fails when auto-queuing websites with
+        - [X] Understand why the database fails when auto-queuing websites with
               UTF-16 characters.
     - [X] Saving indexed pages description and title.
     - [X] Solve an issue with data not being resetted on re-indexing.
