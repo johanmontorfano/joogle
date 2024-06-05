@@ -14,11 +14,13 @@
     - [X] Saving indexed pages description and title.
     - [X] Solve an issue with data not being resetted on re-indexing.
     - [X] Better algorithm for page scoring based on content.
+    - [ ] Save page's localization data.
     - [ ] Scoring based on external links.
     - [ ] Use robots.txt and sitemaps, allowing to only submit a domain name and
         a sitemap URL to the indexer and the bot will do everything by itself.
 - [ ] Search improvements
     - [ ] Implement result pagination instead of the 100's result limit.
+    - [ ] Implement localization segregated search.
 
 ## Indexing
 
