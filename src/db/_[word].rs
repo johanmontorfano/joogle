@@ -12,7 +12,7 @@ pub fn save_word_score(
     let conn = DB_POOL.clone().get().unwrap();
     
     conn.execute_batch(&format!("
-        BEGIN;
+        BEGIN IMMEDIATE;
         CREATE TABLE IF NOT EXISTS w_{word} (
             url text,
             score int,

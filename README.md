@@ -7,8 +7,10 @@
 - [X] Working indexing and searching.
 - [ ] Indexing improvements
     - [X] ⚠️ Auto-queueing of URLs found on webpages.
-        - [ ] Verify `href` values ARE links.
-        - [ ] Transform relative links into absolute links.
+        - [X] Verify `href` values ARE links.
+        - [X] Transform relative links into absolute links.
+        - [ ] Understand why the database fails when auto-queuing websites with
+              UTF-16 characters.
     - [X] Saving indexed pages description and title.
     - [X] Solve an issue with data not being resetted on re-indexing.
     - [X] Better algorithm for page scoring based on content.

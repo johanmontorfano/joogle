@@ -1,6 +1,8 @@
-use std::{collections::{HashMap, HashSet}, sync::{Arc, Mutex}, thread, time::{SystemTime, UNIX_EPOCH}};
+use std::{collections::{HashMap, HashSet}, sync::{Arc, Mutex}, thread, time::{Duration, SystemTime, UNIX_EPOCH}};
+use rocket::form::validate::Len;
 use tokio::runtime::Runtime;
 use scraper::{ElementRef, Html, Selector};
+use url::Url;
 use crate::{db, sanitize::sanitize_string, QUEUE_BOT};
 
 /// Extract all texts from a root element.
@@ -73,8 +75,9 @@ impl IndexData {
             self.words.keys().into_iter().map(|w| w.to_string())
         );
         let word_count = self.words.keys().len();
+        let ttr = word_set.len() as f64 / word_count as f64;
 
-        word_set.len() as f64 / word_count as f64
+        if ttr.is_nan() { 0.1 } else { ttr }
     }
 }
 
@@ -123,16 +126,20 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
     scoreboard.incr_score_selector(&dom, h5_selector, 3);
 
     // We find other URLs we could index.
-    // WARN: We do not check for links integrity here.
-    // TODO: This should be implemented asap.
-    let new_links = dom.select(&a_selector)
-        .into_iter()
-        .map(|a| a.attr("href"))
-        .filter(|r| r.is_some())
-        .map(|a| a.unwrap().to_string())
-        .collect::<Vec<String>>();
-    println!("Found automatically {} links to index.", new_links.len());
-    QUEUE_BOT.queue_url(new_links);
+    if cfg!(feature = "auto_queue") {
+        let new_links = dom.select(&a_selector)
+            .into_iter()
+            .map(|a| a.attr("href"))
+            .filter(|r| r.is_some())
+            .map(|a| QueueBot::ensure_url_format(
+                url.clone(), a.unwrap().to_string()
+            ))
+            .filter(|r| r.is_ok())
+            .map(|a| a.unwrap())
+            .collect::<Vec<String>>();
+        println!("Found automatically {} links to index.", new_links.len());
+        QUEUE_BOT.queue_url(new_links);
+    }
 
     // For each word, we link the current website to the word's table with it's
     // score with this word.
@@ -169,6 +176,24 @@ impl QueueBot {
         Self { queue: Arc::new(Mutex::new(vec![])) }
     }
 
+    /// This function MUST be called when auto-queuing to ensure only correcly
+    /// formatted URLs are submitted.
+    /// The source parameter is used to ensure that relative URLs gets their 
+    /// absolute definition before being submitted to the queue.
+    pub fn ensure_url_format(
+        source: String, url: String
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let source_url = Url::parse(&source)?;
+        let mut url = Url::parse(&url)?;
+
+        if url.domain().is_none() {
+            let _ = url.set_host(Some(&source_url.host().unwrap().to_string()));
+            let _ = url.set_scheme(source_url.scheme());
+        }
+
+        Ok(url_escape::decode(&url.to_string()).to_string())
+    }
+
     pub fn queue_url(&self, urls: Vec<String>) {
         let mut queue = self.queue.lock().unwrap();
         urls.iter().for_each(|url| {
@@ -176,6 +201,7 @@ impl QueueBot {
         });
     }
 
+    /// Starts parallel indexing.
     pub fn thread_bot(&self) {
         let queue_clone = self.queue.clone();
         thread::spawn(move || {
@@ -210,7 +236,7 @@ impl QueueBot {
                         .duration_since(UNIX_EPOCH)
                         .unwrap()
                         .as_millis() - start_at;
-                    println!("Current speed: 1url/{}ms", 
+                    println!("1 url / {} ms", 
                              total_processing_rate / total_processed_urls);
                 }
             }
