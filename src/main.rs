@@ -8,6 +8,9 @@ mod indexing;
 mod sanitize;
 mod searching;
 mod templates;
+#[cfg(feature = "debug")]
+mod debug;
+mod macros;
 mod db;
 
 use lazy_static::lazy_static;
@@ -50,11 +53,30 @@ async fn index_websites(url_list: Json<Vec<String>>) -> Markup {
     indexing_page()
 }
 
+#[cfg(feature = "auto_queue")]
+#[cfg(feature = "debug")]
+#[post("/queue_bot?<enabled>")]
+fn queue_bot_enabling(enabled: bool) -> Markup {
+    use maud::html;
+
+    *QUEUE_BOT.is_paused.lock().unwrap() = enabled;
+    html! { p {("Changes will take effect soon...")} }
+}
+
 #[launch]
 fn rocket() -> _ {
     db::sites::init_table().expect("Failed to init 'sites' table.");
     QUEUE_BOT.thread_bot();
+
     rocket::build()
         .mount("/", routes![index_websites, search_query, search_default_ui])
         .mount("/static", FileServer::from(relative!("/static")))
+        .mount(
+            "/debug",
+            if cfg!(feature = "debug") {
+                routes![queue_bot_enabling]
+            } else {
+                routes![]
+            }
+        )
 }
