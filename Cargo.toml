@@ -4,8 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["auto_queue", "debug"]
+default = ["auto_queue", "debug", "auto_queue_with_sitemaps"]
 auto_queue = []
+auto_queue_with_sitemaps = ["robots_protocol"]
+robots_protocol = []
 debug = ["auto_queue"]
 
 [dependencies]

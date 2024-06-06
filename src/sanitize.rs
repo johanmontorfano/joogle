@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use regex::Regex;
 
 /// Sanitize a string by removing every non alphanumeric char, lowercasing 
@@ -18,4 +20,22 @@ pub fn sql_escape_ap(item: String) -> String {
     item.replace("'", "''")
 }
 
+/// Encode a User-Agent restrictions HashMap for storage in the database.
+pub fn sql_encode_uas(source: HashMap<String, Vec<String>>) -> String {
+    source.into_iter()
+        .map(|(k, v)| (k, v.join(",")))
+        .map(|(k, v)| format!("{k}:{v}"))
+        .collect::<Vec<String>>()
+        .join(" ")
+}
 
+/// Decode a User-Agent restrictions HashMap encoded by `sql_encode_uas`.
+pub fn sql_decode_uas(source: String) -> HashMap<String, Vec<String>> {
+    let hm_iter = source.split(" ")
+        .map(|s| s.split_once(":").unwrap())
+        .map(|(k, v)| (
+            k.to_string(),
+            v.split(",").map(|v| v.to_string()).collect()
+        ));
+    HashMap::from_iter(hm_iter)
+}

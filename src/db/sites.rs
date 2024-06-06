@@ -1,3 +1,5 @@
+use url::Url;
+
 use crate::DB_POOL;
 use crate::sanitize::sql_escape_ap;
 
@@ -8,9 +10,11 @@ pub fn init_table() -> Result<(), Box<dyn std::error::Error>> {
     conn.execute("
         CREATE TABLE IF NOT EXISTS sites (
             url TEXT PRIMARY KEY,
+            domain TEXT,
             title TEXT,
             description TEXT,
-            ttr REAL
+            ttr REAL,
+            CONSTRAINT domain FOREIGN KEY (domain) REFERENCES domains(domain)
         )
     ", [])?;
     Ok(())
@@ -26,15 +30,16 @@ pub fn new_url_record(
     description: String
 ) -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
+    let url_obj = Url::parse(&url)?;
+    let domain = sql_escape_ap(url_obj.domain().unwrap().to_string());
     let url = sql_escape_ap(url);
     let title = sql_escape_ap(title);
     let description = sql_escape_ap(description);
 
     conn.execute(&format!("DELETE FROM sites WHERE url = '{url}'"), [])?;
     conn.execute(&format!("
-        INSERT INTO sites (url, title, description, ttr) VALUES (
-            '{url}', '{title}', '{description}', 0.0
-        );
+            INSERT INTO sites (url, domain, title, description, ttr) 
+            VALUES ('{url}', '{domain}', '{title}', '{description}', 0.0)
     "), [])?;
     Ok(())
 }

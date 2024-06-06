@@ -2,5 +2,6 @@
 // contains actions that can be done on the `sites` table.
 
 pub mod sites;
+pub mod domains;
 #[path = "./_[word].rs"]
 pub mod _word;

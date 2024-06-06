@@ -4,8 +4,8 @@ extern crate r2d2_sqlite;
 extern crate rusqlite;
 #[macro_use] extern crate rocket;
 
-mod indexing;
 mod sanitize;
+mod indexer;
 mod searching;
 mod templates;
 #[cfg(feature = "debug")]
@@ -20,8 +20,8 @@ use r2d2::Pool;
 use rocket::{fs::{FileServer, relative}, serde::json::Json};
 use searching::feeling_lucky;
 use templates::{indexing::indexing_page, search::search_result_page};
-use indexing::QueueBot;
 use debug::routes::toggle_queue_bot;
+use indexer::url::QueueBot;
 
 lazy_static! {
     static ref DB_POOL: r2d2::Pool<r2d2_sqlite::SqliteConnectionManager> = {
@@ -32,7 +32,7 @@ lazy_static! {
             "));
         Pool::new(manager).unwrap()
     };
-    static ref QUEUE_BOT: indexing::QueueBot = {
+    static ref QUEUE_BOT: indexer::url::QueueBot = {
         QueueBot::init()
     };
 }
@@ -49,14 +49,29 @@ fn search_query(q: String) -> Markup {
 }
 
 #[post("/index", data = "<url_list>")]
-async fn index_websites(url_list: Json<Vec<String>>) -> Markup {
+fn index_websites(url_list: Json<Vec<String>>) -> Markup {
     QUEUE_BOT.queue_url(url_list.0);
     indexing_page()
+}
+
+/// It's important to submit a domain to this route as `RobotsDefinition` will
+/// not be able in every scenario to use a URL properly and is intended to use
+/// a domain name.
+#[cfg(all(feature = "auto_queue_with_sitemaps", feature = "robots_protocol"))]
+#[post("/index/from_robots_txt?<domain>")]
+async fn index_websites_from_robots(domain: String) -> String {
+    use indexer::robots::RobotsDefinition;
+
+    let _robots_data = RobotsDefinition::from_domain(domain).await.unwrap();
+    // TODO: Implement sitemaps lookup from here.
+
+    "NOT IMPLEMENTED".into()
 }
 
 #[launch]
 fn rocket() -> _ {
     db::sites::init_table().expect("Failed to init 'sites' table.");
+    db::domains::init_table().expect("Failed to init 'domains' table.");
     QUEUE_BOT.thread_bot();
 
     rocket::build()

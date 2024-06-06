@@ -2,7 +2,7 @@ use std::{
     collections::{HashMap, HashSet}, 
     sync::{Arc, Mutex}, 
     thread, 
-    time::{Duration, SystemTime, UNIX_EPOCH}};
+    time::Duration};
 use tokio::runtime::Runtime;
 use scraper::{ElementRef, Html, Selector};
 use url::Url;
