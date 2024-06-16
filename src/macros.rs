@@ -9,6 +9,19 @@ macro_rules! ifcfg {
     };
 }
 
+/// Conditionally includes code if a specific feature is disabled.
+#[macro_export]
+macro_rules! ifncfg {
+    ($feature:expr, $($item:tt)*) => {
+        #[cfg(not(feature = $feature))]
+        {
+            $($item)*
+        }
+    };
+}
+
+
+
 /// Does a compilation error when trying to compile the source for a release
 /// with specific flags enabled.
 #[macro_export]
