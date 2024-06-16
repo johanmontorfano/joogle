@@ -174,7 +174,6 @@ pub struct QueueBot {
 
 unsafe impl Send for QueueBot {}
 unsafe impl Sync for QueueBot {}
-
 impl QueueBot {
     pub fn init() -> Self {
         Self { 
