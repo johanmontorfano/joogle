@@ -29,6 +29,7 @@ impl RobotsDefinition {
 
         content
             .lines()
+            .filter(|line| !line.is_empty() && !line.starts_with("#"))
             .for_each(|line| {
                 let (directive, value) = line.split_once(":").unwrap();
                 let directive = directive.to_lowercase();
