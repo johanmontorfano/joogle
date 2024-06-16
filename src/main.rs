@@ -48,7 +48,7 @@ fn search_query(q: String) -> Markup {
     search_result_page(q, results)
 }
 
-#[post("/index", data = "<url_list>")]
+#[post("/index/urls", data = "<url_list>")]
 fn index_websites(url_list: Json<Vec<String>>) -> Markup {
     QUEUE_BOT.queue_url(url_list.0);
     indexing_page()
@@ -57,15 +57,24 @@ fn index_websites(url_list: Json<Vec<String>>) -> Markup {
 /// It's important to submit a domain to this route as `RobotsDefinition` will
 /// not be able in every scenario to use a URL properly and is intended to use
 /// a domain name.
-#[cfg(all(feature = "auto_queue_with_sitemaps", feature = "robots_protocol"))]
+#[cfg(all(feature = "sitemaps_protocol", feature = "robots_protocol"))]
 #[post("/index/from_robots_txt?<domain>")]
-async fn index_websites_from_robots(domain: String) -> String {
+async fn index_websites_from_robots(domain: String) -> Markup {
     use indexer::robots::RobotsDefinition;
+    use indexer::sitemaps::SitemapDefinition;
 
-    let _robots_data = RobotsDefinition::from_domain(domain).await.unwrap();
-    // TODO: Implement sitemaps lookup from here.
-
-    "NOT IMPLEMENTED".into()
+    let robots_data = RobotsDefinition::from_domain(domain).await.unwrap();
+    for sitemap_url in robots_data.sitemaps {
+        let sitemap_data = SitemapDefinition::from_any(sitemap_url).await;
+        for sitemap in sitemap_data {
+            if !sitemap.is_index {
+                QUEUE_BOT.queue_url(sitemap.outgoing_urls);
+            } else {
+                println!("Sitemap scraping queue is not ready yet !");
+            }
+        }
+    }
+    indexing_page()
 }
 
 #[launch]
@@ -74,15 +83,19 @@ fn rocket() -> _ {
     db::domains::init_table().expect("Failed to init 'domains' table.");
     QUEUE_BOT.thread_bot();
 
-    rocket::build()
-        .mount("/", routes![index_websites, search_query, search_default_ui])
-        .mount("/static", FileServer::from(relative!("/static")))
-        .mount(
-            "/debug",
-            if cfg!(feature = "debug") {
-                routes![toggle_queue_bot]
-            } else {
-                routes![]
-            }
-        )
+    let mut builder = rocket::build();
+    builder = builder
+        .mount("/", routes![index_websites, search_query, search_default_ui]);
+    builder = builder
+        .mount("/static", FileServer::from(relative!("/static")));
+    ifcfg!("debug", { 
+        builder = builder.mount("/debug", routes![toggle_queue_bot]); 
+    });
+    ifcfg!("sitemaps_protocol", {
+        ifcfg!("robots_protocol", {
+            builder = builder.mount("/", routes![index_websites_from_robots]);
+        });
+    });
+
+    builder
 }
