@@ -16,13 +16,13 @@
     - [X] Better algorithm for page scoring based on content.
     - [ ] Save page's language data.
     - [ ] Scoring based on external links.
-    - [ ] Use robots.txt and sitemaps, allowing to only submit a domain name and
+    - [X] Use robots.txt and sitemaps, allowing to only submit a domain name and
         a sitemap URL to the indexer and the bot will do everything by itself.
 - [ ] Search improvements
     - [ ] Implement result pagination instead of the 100's result limit.
     - [ ] Implement localization segregated search.
-- [ ] Debug
-    - [ ] Improve the way the `routes!` macro is used with debug routes.
+- [X] Debug
+    - [X] Improve the way the `routes!` macro is used with debug routes.
     - [X] Prevent compiling to production with `debug` features enabled.
 
 ## Indexing
