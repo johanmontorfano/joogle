@@ -4,14 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["debug", "smart_auto_queue", "experimental"]
+default = ["smart_auto_queue", "experimental"]
 auto_queue = []
 robots_protocol = []
 sitemaps_protocol = []
 tar_gz_sitemaps = []
 smart_auto_queue = ["auto_queue", "robots_protocol", "sitemaps_protocol"]
-experimental = ["tar_gz_sitemaps"]
-debug = ["auto_queue", "experimental"]
+experimental = ["debug", "tar_gz_sitemaps"]
+debug = []
 
 [dependencies]
 lazy_static = "1.4.0"

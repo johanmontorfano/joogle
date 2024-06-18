@@ -1,12 +1,15 @@
-use std::{
-    collections::{HashMap, HashSet}, 
-    sync::{Arc, Mutex}, 
-    thread, 
-    time::Duration};
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 use tokio::runtime::Runtime;
 use scraper::{ElementRef, Html, Selector};
 use url::Url;
-use crate::{db, debug::gatherers::TimingGatherer, ifcfg, sanitize::sanitize_string, QUEUE_BOT};
+use crate::db;
+use crate::debug::gatherers::TimingGatherer;
+use crate::ifcfg;
+use crate::sanitize::sanitize_string;
+use crate::QUEUE_BOT;
 
 /// Extract all texts from a root element.
 pub fn get_all_texts(from: ElementRef) -> Vec<String> {
@@ -164,9 +167,6 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// The `QueueBot` will manage links to index by creating a queue of every 
-/// website that should be indexed on a separate thread and with a separate
-/// database connection.
 pub struct QueueBot {
     queue: Arc<Mutex<Vec<String>>>,
     pub is_paused: Arc<Mutex<bool>>

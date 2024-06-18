@@ -20,8 +20,8 @@ use r2d2::Pool;
 use rocket::{fs::{FileServer, relative}, serde::json::Json};
 use searching::feeling_lucky;
 use templates::{indexing::indexing_page, search::search_result_page};
-use debug::routes::toggle_queue_bot;
 use indexer::url::QueueBot;
+use indexer::sitemaps::SitemapBot;
 
 lazy_static! {
     static ref DB_POOL: r2d2::Pool<r2d2_sqlite::SqliteConnectionManager> = {
@@ -31,6 +31,9 @@ lazy_static! {
                 PRAGMA encoding = 'UTF-16';
             "));
         Pool::new(manager).unwrap()
+    };
+    static ref SITEMAP_BOT: indexer::sitemaps::SitemapBot = {
+        SitemapBot::init()
     };
     static ref QUEUE_BOT: indexer::url::QueueBot = {
         QueueBot::init()
@@ -61,18 +64,10 @@ fn index_websites(url_list: Json<Vec<String>>) -> Markup {
 #[post("/index/from_robots_txt?<domain>")]
 async fn index_websites_from_robots(domain: String) -> Markup {
     use indexer::robots::RobotsDefinition;
-    use indexer::sitemaps::SitemapDefinition;
 
     let robots_data = RobotsDefinition::from_domain(domain).await.unwrap();
     for sitemap_url in robots_data.sitemaps {
-        let sitemap_data = SitemapDefinition::from_any(sitemap_url).await;
-        for sitemap in sitemap_data {
-            if !sitemap.is_index {
-                QUEUE_BOT.queue_url(sitemap.outgoing_urls);
-            } else {
-                println!("Sitemap scraping queue is not ready yet !");
-            }
-        }
+        SITEMAP_BOT.queue_sitemap(sitemap_url);
     }
     indexing_page()
 }
@@ -82,6 +77,7 @@ fn rocket() -> _ {
     db::sites::init_table().expect("Failed to init 'sites' table.");
     db::domains::init_table().expect("Failed to init 'domains' table.");
     QUEUE_BOT.thread_bot();
+    SITEMAP_BOT.thread_bot();
 
     let mut builder = rocket::build();
     builder = builder
@@ -89,7 +85,9 @@ fn rocket() -> _ {
     builder = builder
         .mount("/static", FileServer::from(relative!("/static")));
     ifcfg!("debug", { 
-        builder = builder.mount("/debug", routes![toggle_queue_bot]); 
+        builder = builder.mount("/debug", routes![
+            debug::routes::toggle_queue_bot
+        ]); 
     });
     ifcfg!("sitemaps_protocol", {
         ifcfg!("robots_protocol", {

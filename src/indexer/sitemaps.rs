@@ -1,7 +1,8 @@
-use std::io::{prelude::*, BufReader};
+use std::{io::{prelude::*, BufReader}, sync::{Arc, Mutex}, thread};
+use tokio::runtime::Runtime;
 use xml::reader::XmlEvent;
 use xml::EventReader;
-use crate::{ifcfg, ifncfg};
+use crate::{debug::gatherers::TimingGatherer, ifcfg, ifncfg, QUEUE_BOT, SITEMAP_BOT};
 
 /// Goes through a sitemap and index content of websites depending on those
 /// sitemaps. If a sitemap links to another sitemap, this other sitemap will
@@ -47,11 +48,9 @@ impl SitemapDefinition {
     /// loded on memory. 
     #[cfg(feature = "tar_gz_sitemaps")]
     pub async fn from_tar_gz(url: String) -> Vec<Self> {
-        use rocket::futures::AsyncReadExt;
         use tar::Archive;
 
-        let mut buf = Vec::new();
-        let _ = surf::get(&url).await.unwrap().read(&mut buf);
+        let buf = surf::get(&url).await.unwrap().body_bytes().await.unwrap();
         let mut archive = Archive::new(buf.as_slice());
 
         println!("Reading compressed XML sitemap from {url}");
@@ -82,15 +81,75 @@ impl SitemapDefinition {
                 nesting.pop();
             }
             XmlEvent::Characters(data) => {
-                if data.ends_with(".tar.gz") || data.ends_with(".xml") {
+                if data.ends_with(".gz") || data.ends_with(".xml") {
                     def.is_index = true;
                 }
-                println!("{}", data.clone());
                 def.outgoing_urls.push(data);
             }
             _ => {}
         });
 
         def
+    }
+}
+
+/// The `SitemapBot` will manage sitemaps to visit by creating a queue of every
+/// sitemap that shuold be visited on a separate thread. This bot will send 
+/// URLs to visit to the `QueueBot`.
+pub struct SitemapBot {
+    queue: Arc<Mutex<Vec<String>>>
+}
+
+unsafe impl Send for SitemapBot {}
+unsafe impl Sync for SitemapBot {}
+impl SitemapBot {
+    pub fn init() -> Self {
+        Self { 
+            queue: Arc::new(Mutex::new(vec![])) 
+        }
+    }
+
+    pub fn queue_sitemap(&self, sitemap: String) {
+        let mut queue = self.queue.lock().unwrap();
+        queue.push(sitemap);
+    }
+
+    /// Starts parallel indexing.
+    pub fn thread_bot(&self) {
+        let queue_clone = self.queue.clone();
+
+        thread::spawn(move || {
+            let rt = Runtime::new().unwrap();
+            let mut tg = { ifcfg!("debug", TimingGatherer::init()) };
+
+            loop {
+                let mut queue: Vec<String> = vec![];
+
+                ifcfg!("debug", tg.start_gathering());
+                // We free the shared queue and drop it to make it available as
+                // soon as possible.
+                {
+                    let mut guard = queue_clone.lock().unwrap();
+                    std::mem::swap(&mut queue, &mut *guard);
+                }
+                for url in &queue {
+                    rt.block_on(async {
+                        let sitemap_data = 
+                            SitemapDefinition::from_any(url.into()).await;
+                        for sitemap in sitemap_data {
+                            if !sitemap.is_index {
+                                QUEUE_BOT.queue_url(sitemap.outgoing_urls);
+                            } else {
+                                for sitemap_url in sitemap.outgoing_urls {
+                                    SITEMAP_BOT.queue_sitemap(sitemap_url);
+                                }
+                            }
+                        }
+                    });
+                    ifcfg!("debug", tg.action_done());
+                    ifcfg!("debug", tg.log_gathered_data());
+                }
+            }
+        });
     }
 }
