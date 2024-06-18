@@ -66,6 +66,7 @@ async fn index_websites_from_robots(domain: String) -> Markup {
     use indexer::robots::RobotsDefinition;
 
     let robots_data = RobotsDefinition::from_domain(domain).await.unwrap();
+    robots_data.db_save().unwrap();
     for sitemap_url in robots_data.sitemaps {
         SITEMAP_BOT.queue_sitemap(sitemap_url);
     }

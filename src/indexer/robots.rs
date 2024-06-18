@@ -56,7 +56,12 @@ impl RobotsDefinition {
                 }
             });
 
-        Ok(Self { domain, uas_disallow, uas_allow, sitemaps })
+        Ok(Self { 
+            domain: url.domain().unwrap().into(), 
+            uas_disallow, 
+            uas_allow, 
+            sitemaps 
+        })
     }
 
     /// TODO: Improve this function's efficiency.

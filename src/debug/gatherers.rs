@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// Get progression data of a system to show timing data.
 pub struct TimingGatherer {
     start_time: u128,
-    actions_done: u128
+    pub actions_done: u128
 }
 
 impl TimingGatherer {

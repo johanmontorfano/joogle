@@ -246,7 +246,11 @@ impl QueueBot {
                         println!("{msg}");
                     });
                     ifcfg!("debug", time_gatherer.action_done());
-                    ifcfg!("debug", time_gatherer.log_gathered_data());
+                    ifcfg!("debug", {
+                        if time_gatherer.actions_done % 10 == 0 {
+                            time_gatherer.log_gathered_data();
+                        }
+                    });
                 }
             }
         });

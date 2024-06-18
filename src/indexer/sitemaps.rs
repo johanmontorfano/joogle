@@ -147,7 +147,11 @@ impl SitemapBot {
                         }
                     });
                     ifcfg!("debug", tg.action_done());
-                    ifcfg!("debug", tg.log_gathered_data());
+                    ifcfg!("debug", {
+                        if tg.actions_done % 10 == 0 {
+                            tg.log_gathered_data();
+                        }
+                    });
                 }
             }
         });
