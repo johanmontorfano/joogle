@@ -11,6 +11,8 @@ use crate::ifcfg;
 use crate::sanitize::sanitize_string;
 use crate::QUEUE_BOT;
 
+use super::localization::{auto_choose_localization, get_localization};
+
 /// Extract all texts from a root element.
 pub fn get_all_texts(from: ElementRef) -> Vec<String> {
     from.children()
@@ -64,7 +66,7 @@ impl IndexData {
 
     /// Increase a score from a selector.
     pub fn incr_score_selector(
-        &mut self, dom: &Html, selector: Selector,rate: usize
+        &mut self, dom: &Html, selector: Selector, rate: usize
     ) {
         let content = dom.select(&selector)
             .into_iter()
@@ -160,9 +162,13 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
             );
         });
 
-    // The TTR is saved alongside the site's data to determine the site's 
-    // content quality.
-    db::sites::update_site_ttr(url, scoreboard.get_ttr())?;
+    // The TTR and localization are saved alongside the site's data to determine the 
+    // site's content quality.
+    db::sites::update_site_ttr(&url, scoreboard.get_ttr())?;
+    db::sites::update_site_loc(
+        &url, 
+        auto_choose_localization(get_localization(dom), scoreboard.get_ttr())
+    )?; 
 
     Ok(())
 }

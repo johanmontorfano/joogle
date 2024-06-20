@@ -1,5 +1,6 @@
 use url::Url;
 
+use crate::indexer::localization::Localization;
 use crate::DB_POOL;
 use crate::sanitize::sql_escape_ap;
 
@@ -14,6 +15,7 @@ pub fn init_table() -> Result<(), Box<dyn std::error::Error>> {
             title TEXT,
             description TEXT,
             ttr REAL,
+            loc TEXT,
             CONSTRAINT domain FOREIGN KEY (domain) REFERENCES domains(domain)
         )
     ", [])?;
@@ -38,21 +40,34 @@ pub fn new_url_record(
 
     conn.execute(&format!("DELETE FROM sites WHERE url = '{url}'"), [])?;
     conn.execute(&format!("
-            INSERT INTO sites (url, domain, title, description, ttr) 
-            VALUES ('{url}', '{domain}', '{title}', '{description}', 0.0)
+            INSERT INTO sites (url, domain, title, description, ttr, loc) 
+            VALUES ('{url}', '{domain}', '{title}', '{description}', 0.0, 'en')
     "), [])?;
     Ok(())
 }
 
 /// Updates the Type-Token Ratio of a site.
 pub fn update_site_ttr(
-    url: String, ttr: f64
+    url: &String, ttr: f64
 ) -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
-    let url = sql_escape_ap(url);
+    let url = sql_escape_ap(url.into());
 
     conn.execute(
         &format!("UPDATE sites SET ttr = {ttr} WHERE url = '{url}'"), []
+    )?;
+    Ok(())
+}
+
+/// Updates the Localization of a site.
+pub fn update_site_loc(
+    url: &String, loc: Localization
+) -> Result<(), Box<dyn std::error::Error>> {
+    let conn = DB_POOL.clone().get().unwrap();
+    let url = sql_escape_ap(url.into());
+
+    conn.execute(
+        &format!("UPDATE sites SET loc = '{}' WHERE url = '{url}'", loc.0), []
     )?;
     Ok(())
 }

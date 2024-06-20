@@ -4,3 +4,4 @@ pub mod url;
 pub mod robots;
 #[cfg(feature = "sitemaps_protocol")]
 pub mod sitemaps;
+pub mod localization;
