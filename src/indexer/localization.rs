@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use scraper::{Html, Selector};
 
 const LOW_TTR: f64 = 0.8;
@@ -20,6 +21,7 @@ pub type Localization = (String, f64);
 /// INFO: The following techniques should be implemented ASAP:
 /// TODO: `hreflang` for external pages
 pub fn get_localization(page: Html) -> Localization {
+    let default: Localization = ("en-US".into(), 0.0);
     let html_selector = Selector::parse("html").unwrap();
     let meta_selector = Selector::parse("meta[http-equiv=\"content_language\"]")
         .unwrap();
@@ -27,6 +29,9 @@ pub fn get_localization(page: Html) -> Localization {
     let html = page.select(&html_selector).collect::<Vec<_>>();
     let meta = page.select(&meta_selector).collect::<Vec<_>>();
 
+    if html.len() < 1 || meta.len() < 1 {
+        return default;
+    }
     if let Some(lang) = html.get(0).unwrap().attr("lang") {
         return (lang.into(), 1.0);
     }
@@ -34,7 +39,7 @@ pub fn get_localization(page: Html) -> Localization {
         return (lang.into(), 1.0);
     }
 
-    ("en-US".into(), 0.0)
+    default
 }
 
 /// Automatically determine if the localization found should be used or the 
