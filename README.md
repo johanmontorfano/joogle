@@ -5,6 +5,7 @@
 ## Roadmap
 
 - [X] Working indexing and searching.
+- [ ] Use a faster, less prone to failure and concurrent database.
 - [ ] Indexing improvements
     - [X] Auto-queueing of URLs found on webpages.
         - [X] Verify `href` values ARE links.
