@@ -27,7 +27,7 @@ lazy_static! {
     static ref DB_POOL: r2d2::Pool<r2d2_sqlite::SqliteConnectionManager> = {
         let manager = SqliteConnectionManager::file("index_db.db")
             .with_init(|c| c.execute_batch("
-                PRAGMA synchronous = 3;
+                PRAGMA synchronous = off;
                 PRAGMA encoding = 'UTF-16';
             "));
         Pool::new(manager).unwrap()
@@ -36,7 +36,7 @@ lazy_static! {
         SitemapBot::init()
     };
     static ref QUEUE_BOT: indexer::url::QueueBot = {
-        QueueBot::init()
+          QueueBot::init()
     };
 }
 
@@ -88,7 +88,8 @@ fn rocket() -> _ {
     ifcfg!("debug", { 
         builder = builder.mount("/debug", routes![
             debug::routes::toggle_queue_bot
-        ]); 
+        ]);
+        
     });
     ifcfg!("sitemaps_protocol", {
         ifcfg!("robots_protocol", {
