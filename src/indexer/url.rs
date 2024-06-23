@@ -1,12 +1,16 @@
 use std::collections::{HashMap, HashSet};
+use std::error::Error;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
+use surf::http::headers::{HeaderValue, HeaderValues};
 use tokio::runtime::Runtime;
 use scraper::{ElementRef, Html, Selector};
 use url::Url;
 use crate::db;
 use crate::debug::gatherers::TimingGatherer;
+use crate::error::StdError;
 use crate::ifcfg;
 use crate::sanitize::sanitize_string;
 use crate::QUEUE_BOT;
@@ -93,7 +97,8 @@ impl IndexData {
 /// at `Indexing` to understand how it proceeds.
 pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
     let mut scoreboard = IndexData::new();
-    let page = surf::get(url.clone()).await?.body_string().await?;
+    let mut res = surf::get(url.clone()).await?;
+    let page = res.body_string().await?;
     let dom = Html::parse_fragment(&page);
 
     let title_selector = Selector::parse("title").unwrap();
@@ -109,6 +114,12 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
     let mut final_title = String::from("unnamed");
     let mut final_desc = String::from("No description.");
 
+    if !res.header("Status").unwrap()
+        .get(0).unwrap()
+        .to_string()
+        .starts_with("2") {
+        return StdError("Unsuccesful response".into()).to_boxed_err()
+    }
     // INFO: To get the first element out of a DOM selector, you somehow have to
     // call `next`.
     if let Some(title) = dom.select(&title_selector).next() {

@@ -12,6 +12,7 @@ mod templates;
 mod debug;
 mod macros;
 mod db;
+mod error;
 
 use lazy_static::lazy_static;
 use maud::Markup;

@@ -58,6 +58,8 @@ This technique is meant to be upgraded as it's not ideal, the next phase is to
 use hyperlinks when indexing websites to determine the domain score (which could
 play a role in finding the best results for a query)
 
+Indexing will not index pages that didn't returned a succesful 2XX HTTP code.
+
 ## Searching
 
 Search queries are sent at `/search`, the `q` parameter contains the query string.
