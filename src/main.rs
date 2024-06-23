@@ -30,6 +30,7 @@ lazy_static! {
             .with_init(|c| c.execute_batch("
                 PRAGMA synchronous = off;
                 PRAGMA encoding = 'UTF-16';
+                PRAGMA journal_mode = WAL;
             "));
         Pool::new(manager).unwrap()
     };
