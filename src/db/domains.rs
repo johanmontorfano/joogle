@@ -53,3 +53,33 @@ pub fn create_row(
     "), [])?;
     Ok(())
 }
+
+/// Save data of a domain to the database iff a row for this domain doesn't 
+/// already exist.
+pub fn create_row_iff_empty(
+    domain: String, 
+    last_robots_txt_visit: u128, 
+    uas_allow: HashMap<String, Vec<String>>, 
+    uas_disallow: HashMap<String, Vec<String>>
+) -> Result<(), Box<dyn std::error::Error>> {
+    let conn = DB_POOL.clone().get().unwrap();
+    let domain = sql_escape_ap(domain);
+    let uas_allow = sql_escape_ap(sql_encode_uas(uas_allow));
+    let uas_disallow = sql_escape_ap(sql_encode_uas(uas_disallow));
+
+    conn.execute(&format!("
+        INSERT OR IGNORE INTO domains (
+            domain,
+            last_robots_txt_visit,
+            uas_allow,
+            uas_disallow
+        )
+        VALUES (
+            '{domain}',
+            {last_robots_txt_visit},
+            '{uas_allow}',
+            '{uas_disallow}'
+        )
+    "), [])?;
+    Ok(())
+}
