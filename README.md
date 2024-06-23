@@ -6,6 +6,7 @@
 
 - [X] Working indexing and searching.
 - [ ] Use a faster, less prone to failure and concurrent database.
+- [ ] Save queued URLs in a file on exit to recover indexing on restart.
 - [ ] Indexing improvements
     - [X] Auto-queueing of URLs found on webpages.
         - [X] Verify `href` values ARE links.
@@ -19,7 +20,7 @@
     - [ ] Scoring based on external links.
     - [X] Use robots.txt and sitemaps, allowing to only submit a domain name and
         a sitemap URL to the indexer and the bot will do everything by itself.
-    - [ ] Avoid indexing pages that returned a non-succesful HTTP code.
+    - [X] Avoid indexing pages that returned a non-succesful HTTP code.
 - [ ] Search improvements
     - [ ] Implement result pagination instead of the 100's result limit.
     - [ ] Implement localization segregated search.
