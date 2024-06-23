@@ -1,4 +1,6 @@
 /target
 index_db.db
 index_db.db-journal
+index_db.db-shm
+index_db.db-wal
 Cargo.lock
