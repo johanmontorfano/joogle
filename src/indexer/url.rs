@@ -1,10 +1,7 @@
 use std::collections::{HashMap, HashSet};
-use std::error::Error;
-use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use surf::http::headers::{HeaderValue, HeaderValues};
 use tokio::runtime::Runtime;
 use scraper::{ElementRef, Html, Selector};
 use url::Url;
@@ -14,7 +11,6 @@ use crate::error::StdError;
 use crate::ifcfg;
 use crate::sanitize::sanitize_string;
 use crate::QUEUE_BOT;
-
 use super::localization::{auto_choose_localization, get_localization};
 
 /// Extract all texts from a root element.
@@ -100,6 +96,7 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
     let mut res = surf::get(url.clone()).await?;
     let page = res.body_string().await?;
     let dom = Html::parse_fragment(&page);
+    let parsed_url = Url::parse(&url).unwrap();
 
     let title_selector = Selector::parse("title").unwrap();
     let desc_selector = Selector::parse("meta[name='description']").unwrap();
@@ -114,11 +111,8 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
     let mut final_title = String::from("unnamed");
     let mut final_desc = String::from("No description.");
 
-    if !res.header("Status").unwrap()
-        .get(0).unwrap()
-        .to_string()
-        .starts_with("2") {
-        return StdError("Unsuccesful response".into()).to_boxed_err()
+    if !res.status().is_success() {
+        return StdError("Unsuccesful response code".into()).to_boxed_err()
     }
     // INFO: To get the first element out of a DOM selector, you somehow have to
     // call `next`.
@@ -134,6 +128,15 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
         scoreboard.incr_score(vec![desc_content.clone()], 8);
         final_desc = desc_content;
     }
+
+    // We create a record of the current domain to avoid any error related to
+    // foreign keys referencing.
+    db::domains::create_row_iff_empty(
+        parsed_url.domain().unwrap().into(), 
+        0, 
+        HashMap::new(), 
+        HashMap::new()
+    )?;
 
     // We create a record of the current url on the database for later linking.
     db::sites::new_url_record(url.clone(), final_title, final_desc)?;
