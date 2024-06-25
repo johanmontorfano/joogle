@@ -14,7 +14,7 @@ mod error;
 
 use lazy_static::lazy_static;
 use maud::Markup;
-use r2d2::{ManageConnection, Pool};
+use r2d2::Pool;
 use r2d2_postgres::{postgres::NoTls, PostgresConnectionManager};
 use rocket::{fs::{FileServer, relative}, serde::json::Json};
 use searching::feeling_lucky;
