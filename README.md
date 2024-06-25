@@ -6,6 +6,10 @@
 
 - [X] Working indexing and searching.
 - [ ] Use a faster, less prone to failure and concurrent database.
+    - [X] Transition to Postgresql.
+    - [X] Implement a Docker config to automatically run the Joogle and the 
+        Postgres server side by side.
+    - [ ] Ensure Joogle works in a container.
 - [ ] Save queued URLs in a file on exit to recover indexing on restart.
 - [ ] Indexing improvements
     - [X] Auto-queueing of URLs found on webpages.
