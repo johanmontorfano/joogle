@@ -12,11 +12,13 @@ mod macros;
 mod db;
 mod error;
 
+use std::net::{IpAddr, Ipv4Addr};
+
 use lazy_static::lazy_static;
 use maud::Markup;
 use r2d2::Pool;
 use r2d2_postgres::{postgres::NoTls, PostgresConnectionManager};
-use rocket::{fs::{FileServer, relative}, serde::json::Json};
+use rocket::{fs::{relative, FileServer}, serde::json::Json, Config};
 use searching::feeling_lucky;
 use templates::{indexing::indexing_page, search::search_result_page};
 use indexer::url::QueueBot;
@@ -25,7 +27,7 @@ use indexer::sitemaps::SitemapBot;
 lazy_static! {
     static ref DB_POOL: Pool<PostgresConnectionManager<NoTls>> = {
         let manager = PostgresConnectionManager::new(
-            "host=localhost user=postgres".parse().unwrap(),
+            "host=pg_index_db user=postgres password=default_password port=5432".parse().unwrap(),
             NoTls
         );
         Pool::new(manager).unwrap()
@@ -73,12 +75,17 @@ async fn index_websites_from_robots(domain: String) -> Markup {
 
 #[launch]
 fn rocket() -> _ {
+    let config = Config {
+        address: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+        ..Config::debug_default()
+    };
+    let mut builder = rocket::build().configure(config);
+
     db::domains::init_table().expect("Failed to init 'domains' table.");
     db::sites::init_table().expect("Failed to init 'sites' table.");
     QUEUE_BOT.thread_bot();
     SITEMAP_BOT.thread_bot();
 
-    let mut builder = rocket::build();
     builder = builder
         .mount("/", routes![index_websites, search_query, search_default_ui]);
     builder = builder
