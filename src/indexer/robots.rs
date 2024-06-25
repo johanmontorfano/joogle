@@ -66,28 +66,25 @@ impl RobotsDefinition {
 
     /// TODO: Improve this function's efficiency.
     /// WARN: Using this function to recover a domain's data will not recover
-    /// sitemaps.
+    /// sitemaps but only robots' related data.
     pub fn from_db(domain: String) -> Result<Self, Box<dyn std::error::Error>> {
-        let conn = DB_POOL.clone().get().unwrap();
+        let mut conn = DB_POOL.clone().get().unwrap();
+        let mut uas_data: (String, String) = ("".into(), "".into());
         let domain = sql_escape_ap(domain);
-        let mut select_stmt = conn.prepare(&format!("
-            SELECT uas_allow, uas_disallow
-            FROM domains
+
+        for row in conn.query(&format!("
+            SELECT uas_allow, uas_disallow 
+            FROM domains 
             WHERE domain = '{domain}'
-        "))?;
-        let domain_iter = select_stmt
-            .query_map([], |row| Ok((
-                row.get::<usize, String>(0).unwrap(),
-                row.get::<usize, String>(1).unwrap()
-            )))?
-            .map(|d| d.unwrap())
-            .collect::<Vec<(String, String)>>();
-        let (uas_allow, uas_disallow) = domain_iter.get(0).unwrap();
+        "), &[]).unwrap() {
+            uas_data.0 = row.get::<usize, String>(0).into();
+            uas_data.1 = row.get::<usize, String>(1).into();
+        }
 
         Ok(Self {
             domain,
-            uas_allow: sql_decode_uas(uas_allow.to_string()),
-            uas_disallow: sql_decode_uas(uas_disallow.to_string()),
+            uas_allow: sql_decode_uas(uas_data.0),
+            uas_disallow: sql_decode_uas(uas_data.1),
             sitemaps: vec![]
         })
     }

@@ -11,7 +11,7 @@ use crate::{sanitize::{sql_encode_uas, sql_escape_ap}, DB_POOL};
 
 /// Initalizes the table if it doesn't exists already.
 pub fn init_table() -> Result<(), Box<dyn std::error::Error>> {
-    let conn = DB_POOL.clone().get().unwrap();
+    let mut conn = DB_POOL.clone().get().unwrap();
 
     conn.execute("
         CREATE TABLE IF NOT EXISTS domains (
@@ -20,7 +20,7 @@ pub fn init_table() -> Result<(), Box<dyn std::error::Error>> {
             uas_allow TEXT,
             uas_disallow TEXT
         )
-    ", [])?;
+    ", &[])?;
     Ok(())
 }
 
@@ -32,7 +32,7 @@ pub fn create_row(
     uas_allow: HashMap<String, Vec<String>>,
     uas_disallow: HashMap<String, Vec<String>>
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let conn = DB_POOL.clone().get().unwrap();
+    let mut conn = DB_POOL.clone().get().unwrap();
     let domain = sql_escape_ap(domain);
     let uas_allow = sql_escape_ap(sql_encode_uas(uas_allow));
     let uas_disallow = sql_escape_ap(sql_encode_uas(uas_disallow));
@@ -50,7 +50,7 @@ pub fn create_row(
             '{uas_allow}',
             '{uas_disallow}'
         )
-    "), [])?;
+    "), &[])?;
     Ok(())
 }
 
@@ -62,7 +62,7 @@ pub fn create_row_iff_empty(
     uas_allow: HashMap<String, Vec<String>>, 
     uas_disallow: HashMap<String, Vec<String>>
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let conn = DB_POOL.clone().get().unwrap();
+    let mut conn = DB_POOL.clone().get().unwrap();
     let domain = sql_escape_ap(domain);
     let uas_allow = sql_escape_ap(sql_encode_uas(uas_allow));
     let uas_disallow = sql_escape_ap(sql_encode_uas(uas_disallow));
@@ -80,6 +80,6 @@ pub fn create_row_iff_empty(
             '{uas_allow}',
             '{uas_disallow}'
         )
-    "), [])?;
+    "), &[])?;
     Ok(())
 }

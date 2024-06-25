@@ -9,9 +9,9 @@ pub fn save_word_score(
     word: String,
     score: usize
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let conn = DB_POOL.clone().get().unwrap();
-    
-    conn.execute_batch(&format!("
+    let mut conn = DB_POOL.clone().get().unwrap();
+
+    conn.batch_execute(&format!("
         BEGIN IMMEDIATE;
         CREATE TABLE IF NOT EXISTS w_{word} (
             url text,
