@@ -1,7 +1,4 @@
 use std::collections::HashMap;
-
-use url::Url;
-
 use crate::{sanitize::{sql_encode_uas, sql_escape_ap}, DB_POOL};
 
 // WARN: IMPORTANT NOTICE FOR THIS TABLE
