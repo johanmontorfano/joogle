@@ -73,8 +73,8 @@ async fn index_websites_from_robots(domain: String) -> Markup {
 
 #[launch]
 fn rocket() -> _ {
-    db::sites::init_table().expect("Failed to init 'sites' table.");
     db::domains::init_table().expect("Failed to init 'domains' table.");
+    db::sites::init_table().expect("Failed to init 'sites' table.");
     QUEUE_BOT.thread_bot();
     SITEMAP_BOT.thread_bot();
 
@@ -82,13 +82,14 @@ fn rocket() -> _ {
     builder = builder
         .mount("/", routes![index_websites, search_query, search_default_ui]);
     builder = builder
-        .mount("/static", FileServer::from(relative!("/static")));
+        .mount("/static", FileServer::from("/usr/local/share/joogle/static"));
+    
     ifcfg!("debug", { 
         builder = builder.mount("/debug", routes![
             debug::routes::toggle_queue_bot
-        ]);
-        
+        ]); 
     });
+    
     ifcfg!("sitemaps_protocol", {
         ifcfg!("robots_protocol", {
             builder = builder.mount("/", routes![index_websites_from_robots]);
