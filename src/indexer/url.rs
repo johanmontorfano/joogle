@@ -251,6 +251,7 @@ impl QueueBot {
                     let mut guard = queue_clone.lock().unwrap();
                     std::mem::swap(&mut queue, &mut *guard);
                 }
+
                 for url in &queue {
                     if *is_paused_clone.lock().unwrap() {
                         let mut guard = queue_clone.lock().unwrap();
