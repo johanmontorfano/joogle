@@ -78,12 +78,15 @@ async fn index_websites_from_robots(domain: String) -> Markup {
 
 #[launch]
 fn rocket() -> _ {
+    let cores: usize = std::thread::available_parallelism().unwrap().into();
+    let queue_bot_threads = cores.min(4);
+
     db::sites::init_table().expect("Failed to init 'sites' table.");
     db::domains::init_table().expect("Failed to init 'domains' table.");
-    QUEUE_BOT.thread_bot();
-    QUEUE_BOT.thread_bot();
-    QUEUE_BOT.thread_bot();
+    for _ in 0..queue_bot_threads { QUEUE_BOT.thread_bot(); }
     SITEMAP_BOT.thread_bot();
+
+    println!("{queue_bot_threads} threads have been started for `QUEUE_BOT`");
 
     let mut builder = rocket::build();
     builder = builder
