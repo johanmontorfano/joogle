@@ -13,6 +13,7 @@ mod debug;
 mod macros;
 mod db;
 mod error;
+mod data_pool;
 
 use lazy_static::lazy_static;
 use maud::Markup;
@@ -79,6 +80,8 @@ async fn index_websites_from_robots(domain: String) -> Markup {
 fn rocket() -> _ {
     db::sites::init_table().expect("Failed to init 'sites' table.");
     db::domains::init_table().expect("Failed to init 'domains' table.");
+    QUEUE_BOT.thread_bot();
+    QUEUE_BOT.thread_bot();
     QUEUE_BOT.thread_bot();
     SITEMAP_BOT.thread_bot();
 

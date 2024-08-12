@@ -5,6 +5,7 @@ use std::time::Duration;
 use tokio::runtime::Runtime;
 use scraper::{ElementRef, Html, Selector};
 use url::Url;
+use crate::data_pool::DataPool;
 use crate::db;
 use crate::debug::gatherers::TimingGatherer;
 use crate::error::StdError;
@@ -188,7 +189,7 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 pub struct QueueBot {
-    queue: Arc<Mutex<Vec<String>>>,
+    data_pool: Arc<Mutex<DataPool<String>>>,
     pub is_paused: Arc<Mutex<bool>>
 }
 
@@ -197,7 +198,7 @@ unsafe impl Sync for QueueBot {}
 impl QueueBot {
     pub fn init() -> Self {
         Self { 
-            queue: Arc::new(Mutex::new(vec![])), 
+            data_pool: Arc::new(Mutex::new(DataPool::init())),
             is_paused: Arc::new(Mutex::new(false))
         }
     }
@@ -221,23 +222,23 @@ impl QueueBot {
     }
 
     pub fn queue_url(&self, urls: Vec<String>) {
-        let mut queue = self.queue.lock().unwrap();
-        urls.iter().for_each(|url| {
-            queue.push(url.into());
-        });
+        self.data_pool.lock().unwrap().add_batch(urls);
     }
 
     /// Starts parallel indexing.
     pub fn thread_bot(&self) {
-        let queue_clone = self.queue.clone();
         let is_paused_clone = self.is_paused.clone();
+        let pool_clone = self.data_pool.clone();
 
         thread::spawn(move || {
             let rt = Runtime::new().unwrap();
             let mut time_gatherer = { ifcfg!("debug", TimingGatherer::init()) };
 
-            loop {
-                let mut queue: Vec<String> = vec![];
+            loop { 
+                let mut guard = pool_clone.lock().unwrap();
+                let url = guard.get_next();
+
+                std::mem::drop(guard);
 
                 ifcfg!("debug", time_gatherer.start_gathering());
                 if *is_paused_clone.lock().unwrap() {
@@ -245,24 +246,13 @@ impl QueueBot {
                     thread::sleep(Duration::from_secs(5));
                     continue;
                 }
-                // We free the shared queue and drop it to make it available
-                // as soon as possible.
-                {
-                    let mut guard = queue_clone.lock().unwrap();
-                    std::mem::swap(&mut queue, &mut *guard);
-                }
 
-                for url in &queue {
-                    if *is_paused_clone.lock().unwrap() {
-                        let mut guard = queue_clone.lock().unwrap();
-                        std::mem::swap(&mut *guard, &mut queue);
-                        break;
-                    }
+                if let Some(u) = url {
                     rt.block_on(async {
-                        println!("Indexing: {url}");
-                        let msg = match index_url(url.clone()).await {
-                            Ok(_) => format!("Indexed: {url}"),
-                            Err(err) => format!("Error: {url} -> {err}")
+                        println!("Indexing: {u}");
+                        let msg = match index_url(u.clone()).await {
+                            Ok(_) => format!("Indexed: {u}"),
+                            Err(err) => format!("Error: {u} -> {err}")
                         };
                         println!("{msg}");
                     });
