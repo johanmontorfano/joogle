@@ -6,7 +6,7 @@
 
 - [X] Working indexing and searching.
 - [ ] Use a faster, less prone to failure and concurrent database.
-- [ ] Save queued URLs in a file on exit to recover indexing on restart.
+- [X] Save queued URLs in a file on exit to recover indexing on restart.
 - [ ] Indexing improvements
     - [X] Auto-queueing of URLs found on webpages.
         - [X] Verify `href` values ARE links.

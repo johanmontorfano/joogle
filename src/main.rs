@@ -15,6 +15,7 @@ mod db;
 mod error;
 mod data_pool;
 
+use db::local::{read_lines, write_lines};
 use lazy_static::lazy_static;
 use maud::Markup;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -76,11 +77,13 @@ async fn index_websites_from_robots(domain: String) -> Markup {
     indexing_page()
 }
 
-#[launch]
-fn rocket() -> _ {
+#[rocket::main]
+async fn main() -> () {
     let cores: usize = std::thread::available_parallelism().unwrap().into();
-    let queue_bot_threads = cores.min(4);
+    let queue_bot_threads = cores.min(2);
+    let saved_url_queue = read_lines("./index_queue").unwrap_or(vec![]);
 
+    QUEUE_BOT.queue_url(saved_url_queue);
     db::sites::init_table().expect("Failed to init 'sites' table.");
     db::domains::init_table().expect("Failed to init 'domains' table.");
     for _ in 0..queue_bot_threads { QUEUE_BOT.thread_bot(); }
@@ -105,5 +108,6 @@ fn rocket() -> _ {
         });
     });
 
-    builder
+    let _ = builder.launch().await;
+    write_lines("./index_queue", QUEUE_BOT.get_remaining_urls()).expect("werr");
 }

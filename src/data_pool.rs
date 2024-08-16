@@ -25,4 +25,8 @@ impl DataPool<String> {
     pub fn get_next(&mut self) -> Option<String> {
         self.dataset.lock().unwrap().pop_front()
     }
+
+    pub fn get_content(&self) -> Vec<String> {
+        self.dataset.lock().unwrap().clone().into_iter().collect()
+    }
 }

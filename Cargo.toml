@@ -14,6 +14,7 @@ experimental = ["debug", "tar_gz_sitemaps"]
 debug = []
 
 [dependencies]
+futures = "0.3.30"
 lazy_static = "1.4.0"
 maud = { version = "0.26.0", features = ["rocket"] }
 r2d2 = "0.8.10"

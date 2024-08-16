@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
-use std::thread;
 use std::time::Duration;
+use std::thread;
 use tokio::runtime::Runtime;
 use scraper::{ElementRef, Html, Selector};
 use url::Url;
@@ -201,6 +201,10 @@ impl QueueBot {
             data_pool: Arc::new(Mutex::new(DataPool::init())),
             is_paused: Arc::new(Mutex::new(false))
         }
+    }
+
+    pub fn get_remaining_urls(&self) -> Vec<String> {
+        self.data_pool.lock().unwrap().get_content()
     }
 
     /// This function MUST be called when auto-queuing to ensure only correcly
