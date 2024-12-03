@@ -13,11 +13,11 @@ impl DataPool<String> {
         Self { dataset: Arc::new(Mutex::new(VecDeque::new())) }
     }
     
-    /// WARN: I have doubts over the efficiency of this function.
     pub fn add_batch(&mut self, batch: Vec<String>) {
-        batch.iter().for_each(|i| self.add_item(i.into()));
+        self.dataset.lock().unwrap().append(&mut VecDeque::from(batch));
     }
 
+    #[allow(dead_code)]
     pub fn add_item(&mut self, item: String) {
         self.dataset.lock().unwrap().push_back(item);
     }
