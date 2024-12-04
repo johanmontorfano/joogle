@@ -1,6 +1,6 @@
 use std::{collections::HashMap, str::FromStr, time::{SystemTime, UNIX_EPOCH}};
 use url::Url;
-use crate::{db::domains, sanitize::{sql_decode_uas, sql_escape_ap}, DB_POOL};
+use crate::{db::domains, error::StdError, sanitize::{sql_decode_uas, sql_escape_ap}, DB_POOL};
 
 /// We need a custom robots.txt parser as none exists for Rust. The convention
 /// for robots.txt is fairly easy so it's should not be any implementation
@@ -68,28 +68,19 @@ impl RobotsDefinition {
     /// WARN: Using this function to recover a domain's data will not recover
     /// sitemaps.
     pub fn from_db(domain: String) -> Result<Self, Box<dyn std::error::Error>> {
-        let conn = DB_POOL.clone().get().unwrap();
+        let mut conn = DB_POOL.clone().get().unwrap();
         let domain = sql_escape_ap(domain);
-        let mut select_stmt = conn.prepare(&format!("
-            SELECT uas_allow, uas_disallow
-            FROM domains
-            WHERE domain = '{domain}'
-        "))?;
-        let domain_iter = select_stmt
-            .query_map([], |row| Ok((
-                row.get::<usize, String>(0).unwrap(),
-                row.get::<usize, String>(1).unwrap()
-            )))?
-            .map(|d| d.unwrap())
-            .collect::<Vec<(String, String)>>();
-        let (uas_allow, uas_disallow) = domain_iter.get(0).unwrap();
 
-        Ok(Self {
-            domain,
-            uas_allow: sql_decode_uas(uas_allow.to_string()),
-            uas_disallow: sql_decode_uas(uas_disallow.to_string()),
-            sitemaps: vec![]
-        })
+        for row in conn.query("SELECT uas_allow, uas_disallow FROM domains 
+                WHERE domain = $1", &[&domain])? {
+            return Ok(Self {
+                domain,
+                uas_allow: sql_decode_uas(row.get::<usize, String>(0)),
+                uas_disallow: sql_decode_uas(row.get::<usize, String>(1)),
+                sitemaps: vec![]
+            });
+        }
+        Err(StdError("Failed to get recover uas'es.".into()).to_boxed())
     }
 
     pub fn db_save(&self) -> Result<(), Box<dyn std::error::Error>> {

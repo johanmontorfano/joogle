@@ -6,6 +6,8 @@
 
 - [X] Working indexing and searching.
 - [ ] Use a faster, less prone to failure and concurrent database.
+    - [X] Implement `postgres` with `r2d2`
+    - [ ] Fix a compatibility issue with `r2d2-postgres` and `lazy_static`
 - [X] Save queued URLs in a file on exit to recover indexing on restart.
 - [ ] Indexing improvements
     - [X] Auto-queueing of URLs found on webpages.

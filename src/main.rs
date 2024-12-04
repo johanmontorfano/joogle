@@ -1,25 +1,25 @@
 #![feature(thread_sleep_until)]
+#[macro_use]
+extern crate rocket;
 extern crate r2d2;
-extern crate r2d2_sqlite;
-extern crate rusqlite;
-#[macro_use] extern crate rocket;
+extern crate r2d2_postgres;
 
-mod sanitize;
-mod indexer;
-mod searching;
-mod templates;
-#[cfg(feature = "debug")]
-mod debug;
-mod macros;
 mod db;
 mod error;
+mod macros;
+mod indexer;
+mod sanitize;
+mod searching;
+mod templates;
 mod data_pool;
+#[cfg(feature = "debug")]
+mod debug;
 
 use db::local::{read_lines, write_lines};
 use lazy_static::lazy_static;
 use maud::Markup;
-use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::Pool;
+use r2d2_postgres::{postgres::NoTls, PostgresConnectionManager};
 use rocket::{fs::{FileServer, relative}, serde::json::Json};
 use searching::feeling_lucky;
 use templates::{indexing::indexing_page, search::search_result_page};
@@ -27,13 +27,11 @@ use indexer::url::QueueBot;
 use indexer::sitemaps::SitemapBot;
 
 lazy_static! {
-    static ref DB_POOL: r2d2::Pool<r2d2_sqlite::SqliteConnectionManager> = {
-        let manager = SqliteConnectionManager::file("index_db.db")
-            .with_init(|c| c.execute_batch("
-                PRAGMA synchronous = off;
-                PRAGMA encoding = 'UTF-16';
-                PRAGMA journal_mode = WAL;
-            "));
+    static ref DB_POOL: Pool<PostgresConnectionManager<NoTls>> = {
+        let manager = PostgresConnectionManager::new(
+            "host=localhost user=joogle dbname=joogle_db password=devpassword port=5432".parse().unwrap(),
+            NoTls
+        );
         Pool::new(manager).unwrap()
     };
     static ref SITEMAP_BOT: indexer::sitemaps::SitemapBot = {
@@ -80,27 +78,21 @@ async fn index_websites_from_robots(domain: String) -> Markup {
 #[rocket::main]
 async fn main() -> () {
     let cores: usize = std::thread::available_parallelism().unwrap().into();
-    let queue_bot_threads = cores.min(2);
-    let saved_url_queue = read_lines("./runtime/queue").unwrap_or(vec![]);
+    let recovered_queue = read_lines("./runtime/queue").unwrap_or(vec![]);
 
-    QUEUE_BOT.queue_url(saved_url_queue);
     db::sites::init_table().expect("Failed to init 'sites' table.");
     db::domains::init_table().expect("Failed to init 'domains' table.");
-    for _ in 0..queue_bot_threads { QUEUE_BOT.thread_bot(); }
+    QUEUE_BOT.queue_url(recovered_queue);
+    (0..cores.min(2)).for_each(|_| QUEUE_BOT.thread_bot() );
     SITEMAP_BOT.thread_bot();
 
-    println!("{queue_bot_threads} threads have been started for `QUEUE_BOT`");
-
-    let mut builder = rocket::build();
-    builder = builder
-        .mount("/", routes![index_websites, search_query, search_default_ui]);
-    builder = builder
+    let mut builder = rocket::build()
+        .mount("/", routes![index_websites, search_query, search_default_ui])
         .mount("/static", FileServer::from(relative!("/static")));
     ifcfg!("debug", { 
         builder = builder.mount("/debug", routes![
             debug::routes::toggle_queue_bot
         ]);
-        
     });
     ifcfg!("sitemaps_protocol", {
         ifcfg!("robots_protocol", {

@@ -16,11 +16,12 @@ fn get_desc_hash_map_keys(
 /// Find matching results for a specific query by decomposing a query string 
 /// into a list of words, and looking at which websites have the best cumulative
 /// score.
+/// TODO: Improve this function's efficiency.
 /// INFO: This technique is meant to change, read the README to learn more.
 pub fn feeling_lucky(query: String) -> Vec<(String, String, String)> {
     let mut scoreboard: HashMap<String, (f64, String, String)> = HashMap::new();
     let sanitized_query = sanitize_string(query);
-    let conn = DB_POOL.clone().get().unwrap();
+    let mut conn = DB_POOL.clone().get().unwrap();
 
     // It's important to understand that we need to limit the number of URL 
     // results we get out of a word table because we do not need an infinite 
@@ -28,30 +29,17 @@ pub fn feeling_lucky(query: String) -> Vec<(String, String, String)> {
     // TODO: If pagination can be implemented, it should be implemented here
     // to remove this query size limit.
     sanitized_query.iter().for_each(|w| {
-        let select_stmt = conn.prepare(&format!("
-            SELECT w_{w}.url, w_{w}.score, sites.ttr, sites.title, sites.description 
-            FROM w_{w} 
-            INNER JOIN sites ON w_{w}.url = sites.url
-            ORDER BY w_{w}.score DESC
-            LIMIT 100
-        "));
-        if select_stmt.is_err() {
-            println!("{:?}", select_stmt.err());
-            return ();
-        }
-
-        let mut select_stmt = select_stmt.unwrap();
-        let score_iter = select_stmt.query_map([], |row| Ok((
-            row.get::<usize, String>(0).unwrap(), 
-            row.get::<usize, usize>(1).unwrap(),
-            row.get::<usize, f64>(2).unwrap(),
-            row.get::<usize, String>(3).unwrap(),
-            row.get::<usize, String>(4).unwrap()
-        ))).unwrap();
-
-        score_iter.for_each(|row| {
-            let (url, score, ttr, title, desc) = row.unwrap();
-            let score = score as f64;
+        for row in conn.query("
+            SELECT w_$1.url, w_$1.score, sites.ttr, sites.title, sites.description
+            FROM w_$1 
+            INNER JOIN sites ON w_$1.url = sites.url
+            ORDER BY w_$1.score DESC
+            LIMIT 100", &[&w]).unwrap() {
+            let url = row.get::<usize, String>(0);
+            let score = row.get::<usize, f64>(1);
+            let ttr = row.get::<usize, f64>(2);
+            let title = row.get::<usize, String>(3);
+            let desc = row.get::<usize, String>(4);
 
             if scoreboard.contains_key(&url) {
                 scoreboard.insert(
@@ -61,7 +49,7 @@ pub fn feeling_lucky(query: String) -> Vec<(String, String, String)> {
             } else {
                 scoreboard.insert(url.clone(), (score * ttr, title, desc));
             }
-        });
+        };
     });
 
     get_desc_hash_map_keys(&mut scoreboard)
