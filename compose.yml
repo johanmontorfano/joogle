@@ -1,0 +1,11 @@
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: dummy
+      POSTGRES_PASSWORD: dummypwd
+      POSTGRES_DB: joogle_db
+    volumes:
+      - ./runtime/pg:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
