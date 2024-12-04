@@ -81,7 +81,7 @@ async fn index_websites_from_robots(domain: String) -> Markup {
 async fn main() -> () {
     let cores: usize = std::thread::available_parallelism().unwrap().into();
     let queue_bot_threads = cores.min(2);
-    let saved_url_queue = read_lines("./index_queue").unwrap_or(vec![]);
+    let saved_url_queue = read_lines("./runtime/queue").unwrap_or(vec![]);
 
     QUEUE_BOT.queue_url(saved_url_queue);
     db::sites::init_table().expect("Failed to init 'sites' table.");
@@ -109,5 +109,6 @@ async fn main() -> () {
     });
 
     let _ = builder.launch().await;
-    write_lines("./index_queue", QUEUE_BOT.get_remaining_urls()).expect("werr");
+    write_lines("./runtime/queue", QUEUE_BOT.get_remaining_urls())
+        .expect("werr");
 }
