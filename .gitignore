@@ -1,4 +1,6 @@
 /target
+/runtime
+.env
 index_db.db
 index_db.db-journal
 index_db.db-shm
