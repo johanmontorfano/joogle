@@ -22,15 +22,13 @@ pub fn get_all_texts(from: ElementRef) -> Vec<String> {
             if c.value().is_text() {
                 vec![c.value().as_text().unwrap().to_string()]
             } else {
-                c.children()
-                    .map(|c| {
-                        if c.value().is_text() {
-                            c.value().as_text().unwrap().to_string()
-                        } else {
-                            "".to_string()
-                        }
-                    })
-                    .collect()
+                c.children().map(|c| {
+                    if c.value().is_text() {
+                        c.value().as_text().unwrap().to_string()
+                    } else {
+                        "".to_string()
+                    }
+                }).collect()
             }
         })
         .flatten()

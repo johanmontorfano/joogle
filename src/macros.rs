@@ -20,8 +20,6 @@ macro_rules! ifncfg {
     };
 }
 
-
-
 /// Does a compilation error when trying to compile the source for a release
 /// with specific flags enabled.
 #[macro_export]

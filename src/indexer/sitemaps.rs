@@ -14,7 +14,6 @@ pub struct SitemapDefinition {
     pub is_index: bool
 }
 
-
 impl SitemapDefinition {
     /// Load a sitemap depending on if it's a tarball or an xml document. This
     /// function does not need the `tar_gz_sitemaps` experimental feature to 

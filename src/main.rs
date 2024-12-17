@@ -1,26 +1,29 @@
 #![feature(thread_sleep_until)]
+#[macro_use] extern crate rocket;
+#[macro_use] extern crate lazy_static;
+#[macro_use] extern crate rusqlite;
 extern crate r2d2;
 extern crate r2d2_sqlite;
-extern crate rusqlite;
-#[macro_use] extern crate rocket;
+
 
 mod sanitize;
 mod indexer;
 mod searching;
 mod templates;
-#[cfg(feature = "debug")]
-mod debug;
 mod macros;
 mod db;
 mod error;
 mod data_pool;
+#[cfg(feature = "debug")] mod debug;
+
+use std::env::args;
 
 use db::local::{read_lines, write_lines};
-use lazy_static::lazy_static;
+use debug::routes::toggle_queue_bot;
 use maud::Markup;
 use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::Pool;
-use rocket::{fs::{FileServer, relative}, serde::json::Json};
+use rocket::{form::validate::{Contains, Len}, fs::{relative, FileServer}, serde::json::Json};
 use searching::feeling_lucky;
 use templates::{indexing::indexing_page, search::search_result_page};
 use indexer::url::QueueBot;
@@ -36,12 +39,8 @@ lazy_static! {
             "));
         Pool::new(manager).unwrap()
     };
-    static ref SITEMAP_BOT: indexer::sitemaps::SitemapBot = {
-        SitemapBot::init()
-    };
-    static ref QUEUE_BOT: indexer::url::QueueBot = {
-          QueueBot::init()
-    };
+    static ref SITEMAP_BOT: SitemapBot = SitemapBot::init();
+    static ref QUEUE_BOT: QueueBot = QueueBot::init();
 }
 
 #[get("/search")]
@@ -64,7 +63,6 @@ fn index_websites(url_list: Json<Vec<String>>) -> Markup {
 /// It's important to submit a domain to this route as `RobotsDefinition` will
 /// not be able in every scenario to use a URL properly and is intended to use
 /// a domain name.
-#[cfg(all(feature = "sitemaps_protocol", feature = "robots_protocol"))]
 #[post("/index/from_robots_txt?<domain>")]
 async fn index_websites_from_robots(domain: String) -> Markup {
     use indexer::robots::RobotsDefinition;
@@ -79,36 +77,32 @@ async fn index_websites_from_robots(domain: String) -> Markup {
 
 #[rocket::main]
 async fn main() -> () {
-    let cores: usize = std::thread::available_parallelism().unwrap().into();
-    let queue_bot_threads = cores.min(2);
-    let saved_url_queue = read_lines("./runtime/queue").unwrap_or(vec![]);
+    let cargs = args().collect::<Vec<String>>();
 
-    QUEUE_BOT.queue_url(saved_url_queue);
     db::sites::init_table().expect("Failed to init 'sites' table.");
     db::domains::init_table().expect("Failed to init 'domains' table.");
-    for _ in 0..queue_bot_threads { QUEUE_BOT.thread_bot(); }
+    QUEUE_BOT.thread_bot();
     SITEMAP_BOT.thread_bot();
 
-    println!("{queue_bot_threads} threads have been started for `QUEUE_BOT`");
+    if !cargs.contains("--no-queue-recover".to_string()) {
+        let rurls = read_lines("./runtime/queue").unwrap_or(vec![]);
 
-    let mut builder = rocket::build();
-    builder = builder
-        .mount("/", routes![index_websites, search_query, search_default_ui]);
-    builder = builder
-        .mount("/static", FileServer::from(relative!("/static")));
-    ifcfg!("debug", { 
-        builder = builder.mount("/debug", routes![
-            debug::routes::toggle_queue_bot
-        ]);
-        
-    });
-    ifcfg!("sitemaps_protocol", {
-        ifcfg!("robots_protocol", {
-            builder = builder.mount("/", routes![index_websites_from_robots]);
-        });
-    });
+        println!("[QUEUE] Recovered {} URLs", rurls.len());
+        QUEUE_BOT.queue_url(rurls);
+    }
 
-    let _ = builder.launch().await;
+    let _ = rocket::build()
+        .mount("/", routes![
+            index_websites, 
+            search_query, 
+            search_default_ui,
+            index_websites_from_robots
+        ])
+        .mount("/debug", routes![toggle_queue_bot])
+        .mount("/static", FileServer::from(relative!("/static")))
+        .launch()
+        .await;
+
     write_lines("./runtime/queue", QUEUE_BOT.get_remaining_urls())
         .expect("werr");
 }

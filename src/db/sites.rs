@@ -8,17 +8,15 @@ use crate::sanitize::sql_escape_ap;
 pub fn init_table() -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
 
-    conn.execute("
-        CREATE TABLE IF NOT EXISTS sites (
-            url TEXT PRIMARY KEY,
-            domain TEXT,
-            title TEXT,
-            description TEXT,
-            ttr REAL,
-            loc TEXT,
-            CONSTRAINT domain FOREIGN KEY (domain) REFERENCES domains(domain)
-        )
-    ", [])?;
+    conn.execute("CREATE TABLE IF NOT EXISTS sites (
+        url TEXT PRIMARY KEY,
+        domain TEXT,
+        title TEXT,
+        description TEXT,
+        ttr REAL,
+        loc TEXT,
+        CONSTRAINT domain FOREIGN KEY (domain) REFERENCES domains(domain)
+    )", [])?;
     Ok(())
 }
 
@@ -34,15 +32,14 @@ pub fn new_url_record(
     let conn = DB_POOL.clone().get().unwrap();
     let url_obj = Url::parse(&url)?;
     let domain = sql_escape_ap(url_obj.domain().unwrap().to_string());
-    let url = sql_escape_ap(url);
     let title = sql_escape_ap(title);
     let description = sql_escape_ap(description);
 
-    conn.execute(&format!("DELETE FROM sites WHERE url = '{url}'"), [])?;
-    conn.execute(&format!("
-            INSERT INTO sites (url, domain, title, description, ttr, loc) 
-            VALUES ('{url}', '{domain}', '{title}', '{description}', 0.0, 'en')
-    "), [])?;
+    conn.execute("DELETE FROM sites WHERE url = ?1", [url.clone()])?;
+    conn.execute("
+        INSERT INTO sites (url, domain, title, description, ttr, loc) 
+        VALUES (?1, ?2, ?3, ?4, 0.0, 'en')
+    ", [url, domain, title, description])?;
     Ok(())
 }
 
@@ -51,10 +48,10 @@ pub fn update_site_ttr(
     url: &String, ttr: f64
 ) -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
-    let url = sql_escape_ap(url.into());
 
     conn.execute(
-        &format!("UPDATE sites SET ttr = {ttr} WHERE url = '{url}'"), []
+        "UPDATE sites SET ttr = ?1 WHERE url = ?2",
+        params![ttr, url]
     )?;
     Ok(())
 }
@@ -64,10 +61,10 @@ pub fn update_site_loc(
     url: &String, loc: Localization
 ) -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
-    let url = sql_escape_ap(url.into());
 
     conn.execute(
-        &format!("UPDATE sites SET loc = '{}' WHERE url = '{url}'", loc.0), []
+        "UPDATE sites SET loc = ?1 WHERE url = ?2",
+        params![loc.0, url]
     )?;
     Ok(())
 }

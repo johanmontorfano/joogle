@@ -17,7 +17,7 @@ pub fn search_result_page(
                 h1 { "Joogle" }
                 form action="search" method="get" {
                     input type="text" name="q" placeholder="What's in your mind ?";
-                    input type="submit" value="🔍";
+                    input type="submit" value="Go";
                 }
             }
             div id="results" {

@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use scraper::{Html, Selector};
 
 const LOW_TTR: f64 = 0.8;
@@ -23,9 +22,8 @@ pub type Localization = (String, f64);
 pub fn get_localization(page: Html) -> Localization {
     let default: Localization = ("en-US".into(), 0.0);
     let html_selector = Selector::parse("html").unwrap();
-    let meta_selector = Selector::parse("meta[http-equiv=\"content_language\"]")
+    let meta_selector = Selector::parse("meta[http-equiv='content_language']")
         .unwrap();
-
     let html = page.select(&html_selector).collect::<Vec<_>>();
     let meta = page.select(&meta_selector).collect::<Vec<_>>();
 
@@ -38,7 +36,6 @@ pub fn get_localization(page: Html) -> Localization {
     if let Some(lang) = meta.get(0).unwrap().attr("lang") {
         return (lang.into(), 1.0);
     }
-
     default
 }
 
@@ -47,10 +44,8 @@ pub fn get_localization(page: Html) -> Localization {
 /// already use for indexation. If the probability AND the TTR are low, the
 /// default localization will be used.
 pub fn auto_choose_localization(loc: Localization, ttr: f64) -> Localization {
-    println!("{:?}", loc);
     if loc.1 <= LOW_LOC_PROB && ttr <= LOW_TTR {
         return ("en-US".into(), 0.0)
     }
-
     loc
 }
