@@ -2,6 +2,7 @@
 #[macro_use] extern crate rocket;
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate rusqlite;
+#[macro_use] extern crate maud;
 extern crate r2d2;
 extern crate r2d2_sqlite;
 
@@ -14,18 +15,21 @@ mod macros;
 mod db;
 mod error;
 mod data_pool;
+mod api;
 #[cfg(feature = "debug")] mod debug;
 
 use std::env::args;
-
 use db::{local::{read_lines, write_lines}, sites::get_rows_number};
 use debug::routes::toggle_queue_bot;
 use maud::Markup;
 use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::Pool;
-use rocket::{form::validate::{Contains, Len}, fs::{relative, FileServer}, serde::json::Json};
+use rocket::{form::validate::Contains, fs::*, serde::json::Json};
 use searching::feeling_lucky;
-use pages::{indexing::indexing_page, search::search_result_page};
+use pages::indexing::indexing_page;
+use pages::search::search_result_page;
+use pages::console::*;
+use api::get_queue::*;
 use indexer::url::QueueBot;
 use indexer::sitemaps::SitemapBot;
 
@@ -33,7 +37,7 @@ static mut INDEXED_URLS_NB: isize = 0;
 
 lazy_static! {
     static ref DB_POOL: r2d2::Pool<r2d2_sqlite::SqliteConnectionManager> = {
-        let manager = SqliteConnectionManager::file("index_db.db")
+        let manager = SqliteConnectionManager::file("./runtime/index_db.db")
             .with_init(|c| c.execute_batch("
                 PRAGMA synchronous = off;
                 PRAGMA encoding = 'UTF-16';
@@ -100,10 +104,12 @@ async fn main() -> () {
             index_websites, 
             search_query, 
             search_default_ui,
-            index_websites_from_robots
+            index_websites_from_robots,
+            console_ui
         ])
         .mount("/debug", routes![toggle_queue_bot])
         .mount("/static", FileServer::from(relative!("/static")))
+        .mount("/api", routes![get_queue, get_queue_length, get_indexed_urls])
         .launch()
         .await;
 

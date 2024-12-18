@@ -1,4 +1,4 @@
-use maud::{html, Markup, DOCTYPE};
+use maud::{Markup, DOCTYPE};
 
 /// Renders the indexing page.
 pub fn indexing_page() -> Markup {

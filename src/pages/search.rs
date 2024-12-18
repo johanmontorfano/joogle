@@ -1,5 +1,4 @@
-use maud::{html, Markup, DOCTYPE};
-
+use maud::{Markup, DOCTYPE};
 use crate::INDEXED_URLS_NB;
 
 /// Renders the search result page. To avoid too much logic overhead, we
