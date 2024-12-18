@@ -6,7 +6,7 @@ pub fn indexing_page() -> Markup {
         (DOCTYPE)
         head {
             title { "JOOGLE INDEXING" } 
-            link rel="stylesheet" href="/static/global.css";
+            link rel="stylesheet" href="/static/root.css";
         }
         body {
             p { "URLs have been queued !" }

@@ -15,6 +15,7 @@ pub fn search_result_page(
             (DOCTYPE)
             head {
                 meta charset="utf-8";
+                link rel="stylesheet" href="/static/root.css";
                 link rel="stylesheet" href="/static/search.css";
                 title { 
                     @if !is_dummy {

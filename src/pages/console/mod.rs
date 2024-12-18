@@ -10,6 +10,8 @@ pub fn console_ui() -> Markup {
             (DOCTYPE)
             head {
                 title { "Joogle Search Console" }
+                link rel="stylesheet" href="/static/root.css";
+                link rel="stylesheet" href="/static/dashboard.css";
             }
             body {
                 h1 { "JOOGLE SEARCH CONSOLE" }
