@@ -9,7 +9,7 @@ extern crate r2d2_sqlite;
 mod sanitize;
 mod indexer;
 mod searching;
-mod templates;
+mod pages;
 mod macros;
 mod db;
 mod error;
@@ -25,7 +25,7 @@ use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::Pool;
 use rocket::{form::validate::{Contains, Len}, fs::{relative, FileServer}, serde::json::Json};
 use searching::feeling_lucky;
-use templates::{indexing::indexing_page, search::search_result_page};
+use pages::{indexing::indexing_page, search::search_result_page};
 use indexer::url::QueueBot;
 use indexer::sitemaps::SitemapBot;
 
