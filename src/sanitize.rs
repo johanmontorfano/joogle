@@ -7,9 +7,8 @@ use regex::Regex;
 /// WARN: This function can be optimized to be faster.
 pub fn sanitize_string<T: std::fmt::Display>(s: T) -> Vec<String> {
     let re = Regex::new(r"[^a-zA-Z0-9]").unwrap();
-    let s = s.to_string().to_lowercase();
 
-    re.split(&s)
+    re.split(&s.to_string().to_lowercase())
         .filter(|w| !w.is_empty())
         .map(|w| w.to_string())
         .collect()

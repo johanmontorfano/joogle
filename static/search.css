@@ -1,52 +1,90 @@
-div#search-area {
-    width: 100%;
-    height: 30vh;
-    border-bottom: 1px solid white;
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400&display=swap');
+
+@font-face {
+    font-family: IntegralCFMed;
+    src: url(/static/integralcf_med.otf);
 }
 
-div#search-area > h1 {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-transform: uppercase;
-    height: 50%;
+div.big_search_container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    padding: 2%;
 }
 
-div#search-area > form {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 50%;
+div.big_search_container h1 {
+    text-align: center;
+    font-size: 4rem;
+    font-family: IntegralCFMed;
 }
 
-div#search-area > form > input {
+form {
+    margin-block: 0;
+}
+
+form input[type="text"] {
+    width: 60vw;
+    min-width: 200px;
+    max-width: 1000px;
+    padding: 16px;
+    font-size: 1.1rem;
+    border-radius: 48px;
     border: 1px solid gray;
-    padding: 4px;
 }
 
-div#search-area > form > input[type="text"] {
-    min-height: 30px;
-    min-width: 60vw;
-    border-top-left-radius: 15px;
-    border-bottom-left-radius: 15px;
-}
-
-div#search-area > form > input[type="submit"] {
-    min-width: 100px;
-    min-height: 40px;
-    border-top-right-radius: 15px;
-    border-bottom-right-radius: 15px;
-}
-
-div#results {
+header {
     display: flex;
-    flex-direction: column;
+    align-items: center;
 }
 
-div#results > div > a {
-    font-size: large;
+header p.logo_like {
+    font-family: IntegralCFMed;
+    font-size: 1.3rem;
 }
 
-div#results > div {
-    padding-top: 10px;
+header input[type="text"] {
+    padding: 6px;
+    font-size: 1rem;
+}
+
+header form {
+    margin-left: 24px;
+}
+
+footer {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-family: Roboto;
+    display: flex;
+}
+
+footer * {
+    opacity: .5;
+    margin-right: 20px;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+div.results_content {
+    margin: .5vw;
+    padding: 1vw;
+    border-radius: 14px;
+    border: 3px solid #CCCCCC;
+    background: #EEEEEE;
+}
+
+div.results_content div {
+    margin-bottom: 20px;
+    font-family: Roboto;
+}
+
+div.results_content p {
+    opacity: .8;
+    margin-block-start: 6px;
 }

@@ -6,7 +6,7 @@ use tokio::runtime::Runtime;
 use scraper::{ElementRef, Html, Selector};
 use url::Url;
 use crate::data_pool::DataPool;
-use crate::db;
+use crate::{db, INDEXED_URLS_NB};
 use crate::debug::gatherers::TimingGatherer;
 use crate::error::StdError;
 use crate::ifcfg;
@@ -22,15 +22,13 @@ pub fn get_all_texts(from: ElementRef) -> Vec<String> {
             if c.value().is_text() {
                 vec![c.value().as_text().unwrap().to_string()]
             } else {
-                c.children()
-                    .map(|c| {
-                        if c.value().is_text() {
-                            c.value().as_text().unwrap().to_string()
-                        } else {
-                            "".to_string()
-                        }
-                    })
-                    .collect()
+                c.children().map(|c| {
+                    if c.value().is_text() {
+                        c.value().as_text().unwrap().to_string()
+                    } else {
+                        "".to_string()
+                    }
+                }).collect()
             }
         })
         .flatten()
@@ -255,7 +253,10 @@ impl QueueBot {
                     rt.block_on(async {
                         println!("Indexing: {u}");
                         let msg = match index_url(u.clone()).await {
-                            Ok(_) => format!("Indexed: {u}"),
+                            Ok(_) => {
+                                unsafe { INDEXED_URLS_NB += 1; };
+                                format!("Indexed: {u}")
+                            }
                             Err(err) => format!("Error: {u} -> {err}")
                         };
                         println!("{msg}");
