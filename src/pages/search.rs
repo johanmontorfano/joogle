@@ -28,7 +28,7 @@ pub fn search_result_page(
                 @if is_dummy {
                     (welcome())
                 } @else {
-                    (results(res))
+                    (results(query, res))
                 }
             }
         }
@@ -56,12 +56,15 @@ fn welcome() -> Markup {
     }
 }
 
-fn results(res: Vec<(String, String, String)>) -> Markup {
+fn results(query: String, res: Vec<(String, String, String)>) -> Markup {
     html! {
         header {
             p class="logo_like" { "JOOGLE" }
             form class="search_header" {
-                input type="text" name="q" placeholder="Go on, search...";
+                input type="text" 
+                    value=(query)
+                    name="q" 
+                    placeholder="Go on, search...";
                 input type="submit" value="GO" hidden;
             }
         }
