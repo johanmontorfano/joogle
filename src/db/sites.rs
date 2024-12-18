@@ -20,6 +20,20 @@ pub fn init_table() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Returns the number of rows of the `sites` table. 
+/// INFO: For performance reasons, PLEASE DO NOT CALL THIS FUNCTION TOO OFTEN
+pub fn get_rows_number() -> isize {
+    let conn = DB_POOL.clone().get().unwrap();
+    let mut query = conn.prepare("SELECT COUNT(1) FROM sites").unwrap();
+    
+    if let Ok(mut rows) = query.query([]) {
+        let row_0 = rows.next().unwrap();
+        
+        return row_0.unwrap().get::<usize, isize>(0).unwrap();
+    }
+    return -1;
+}
+
 /// Create a new record of an indexed URL, multiple URLs of the same websites 
 /// will always have a unique record here.
 /// WARN: If this function is called with an URL already present in the 

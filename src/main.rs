@@ -18,7 +18,7 @@ mod data_pool;
 
 use std::env::args;
 
-use db::local::{read_lines, write_lines};
+use db::{local::{read_lines, write_lines}, sites::get_rows_number};
 use debug::routes::toggle_queue_bot;
 use maud::Markup;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -28,6 +28,8 @@ use searching::feeling_lucky;
 use templates::{indexing::indexing_page, search::search_result_page};
 use indexer::url::QueueBot;
 use indexer::sitemaps::SitemapBot;
+
+static mut INDEXED_URLS_NB: isize = 0;
 
 lazy_static! {
     static ref DB_POOL: r2d2::Pool<r2d2_sqlite::SqliteConnectionManager> = {
@@ -83,7 +85,9 @@ async fn main() -> () {
     db::domains::init_table().expect("Failed to init 'domains' table.");
     QUEUE_BOT.thread_bot();
     SITEMAP_BOT.thread_bot();
-
+    unsafe {
+        INDEXED_URLS_NB = get_rows_number();
+    }
     if !cargs.contains("--no-queue-recover".to_string()) {
         let rurls = read_lines("./runtime/queue").unwrap_or(vec![]);
 

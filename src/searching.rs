@@ -17,6 +17,7 @@ fn get_desc_hash_map_keys(
 /// Find matching results for a specific query by decomposing a query string 
 /// into a list of words, and looking at which websites have the best cumulative
 /// score.
+/// Results are returned as `(url, title, description)`
 /// INFO: This technique is meant to change, read the README to learn more.
 pub fn feeling_lucky(query: String) -> Vec<(String, String, String)> {
     let mut scores: HashMap<String, (f64, String, String)> = HashMap::new();
