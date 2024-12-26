@@ -9,7 +9,7 @@ pub fn mod_indexing_expl() -> Markup {
             div class="mod_header" {
                 h3 class="mod_title" { "Indexing Explorer" }
             }
-            div class="mod_container" {
+            div class="mod_body" {
                 p {
                     "URLs in queue: ";
                     span id="ie__queue_length" { "?" }

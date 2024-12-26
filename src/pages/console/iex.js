@@ -15,6 +15,9 @@ async function ie_hydrate() {
     const iu_res = await (await fetch("/api/get_indexed_urls")).text();
 
     iu.innerText = iu_res;
+
+    setTimeout(ie_hydrate, 1000);
 }
 
-setInterval(ie_hydrate, 1000);
+
+setTimeout(ie_hydrate, 50);

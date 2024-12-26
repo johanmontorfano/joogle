@@ -1,5 +1,8 @@
 mod iex;
+mod sublink;
+use iex::mod_indexing_expl;
 use maud::{Markup, DOCTYPE};
+use sublink::mod_submit_link;
 
 /// To ensure ease of development, every part of the console will be a module,
 /// making the console ui 100% modulable.
@@ -15,7 +18,8 @@ pub fn console_ui() -> Markup {
             }
             body {
                 h1 { "JOOGLE SEARCH CONSOLE" }
-                (iex::mod_indexing_expl())
+                div { (mod_submit_link()) }
+                div { (mod_indexing_expl()) }
             }
         }
     }

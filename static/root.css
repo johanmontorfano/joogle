@@ -5,4 +5,25 @@
     src: url(/static/integralcf_med.otf);
 }
 
+:root {
+    @media screen and (prefers-color-scheme: dark) {
+        --text: #E3E3E3;
+        --background: #121212;
+        --container: #343434;
+        --border: #232323;
+    }
+    @media screen and (prefers-color-scheme: light) {
+        --text: #121212;
+        --background: #E3E3E3;
+        --container: #D8D8D8;
+        --border: #F6F6F6;
+    }   
+}
 
+* {
+    color: var(--text);
+}
+
+body, div, input {
+    background: var(--background);
+}

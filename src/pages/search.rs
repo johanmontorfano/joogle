@@ -44,7 +44,7 @@ fn welcome() -> Markup {
     html! {
         div class="big_search_container" {
             h1 class="big_title" { "JOOGLE" }
-            form class="big_title_form" action="search" method="GET" {
+            form class="big_title_form" method="GET" {
                 input type="text" name="q" placeholder="Type to search...";
                 input type="submit" value="GO" hidden;
             }
@@ -61,9 +61,9 @@ fn results(query: String, res: Vec<(String, String, String)>) -> Markup {
         header {
             p class="logo_like" { "JOOGLE" }
             form class="search_header" {
-                input type="text" 
+                input type="text" method="GET" 
                     value=(query)
-                    name="q" 
+                    name="q"
                     placeholder="Go on, search...";
                 input type="submit" value="GO" hidden;
             }
