@@ -25,6 +25,7 @@ use maud::Markup;
 use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::Pool;
 use rocket::{form::validate::Contains, fs::*, serde::json::Json};
+use rocket_file_cache::CacheBuilder;
 use searching::feeling_lucky;
 use pages::indexing::indexing_page;
 use pages::search::search_result_page;
@@ -99,7 +100,17 @@ async fn main() -> () {
         QUEUE_BOT.queue_url(rurls);
     }
 
+    // Building a file cache is needed to reduce IO reads of bundles and
+    // other stuff. It also allows some services to be updated without
+    // restarting anything.
+    // Cache storage: 20MB
+    let cache = CacheBuilder::new()
+        .size_limit(1024 * 1024 * 20)
+        .build()
+        .unwrap();
+
     let _ = rocket::build()
+        .manage(cache)
         .mount("/", routes![
             index_websites, 
             search_query, 
