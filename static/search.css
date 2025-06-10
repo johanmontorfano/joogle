@@ -31,7 +31,7 @@ header {
     align-items: center;
 }
 
-header p.logo_like {
+p.logo_like {
     font-family: IntegralCFMed;
     font-size: 1.3rem;
 }
