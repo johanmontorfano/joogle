@@ -1,11 +1,16 @@
-import { RouteSectionProps } from "@solidjs/router";
+import { A, RouteSectionProps } from "@solidjs/router";
 
 export function RootLayout(props: RouteSectionProps<any>) {
     return <div class="w-full min-h-dvh">
-        <div class="w-full border-b border-gray-500 p-2">
+        <div class="w-full border-b border-gray-500 p-2 flex justify-between">
             <p class="logo_like">JOOGLE Search Console</p>
+            <nav class="flex items-center gap-2">
+                <A href="/search/console" activeClass="active" end>Dashboard</A>
+                <A href="/search/console/jobs" activeClass="active" end>Jobs</A>
+            </nav>
+            <p class="logo_like text-transparent select-none">JOOGLE Search Console</p>
         </div>
-        <div>
+        <div class="p-2">
             {props.children}
         </div>
     </div>

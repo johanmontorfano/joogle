@@ -7,12 +7,13 @@ import { render } from "solid-js/web";
 import { RootLayout } from "./pages/layout";
 import "../public/root.css";
 import "../public/search.css";
+import { RootIndex } from "./pages";
 
 const root = document.getElementById("root");
 
 render(
     () => <Router root={RootLayout}>
-        <Route path="/" component={() => <p>Hello</p>} />
+        <Route path="/search/console" component={RootIndex} />
     </Router>,
     root,
 );
