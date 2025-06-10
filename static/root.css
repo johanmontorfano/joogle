@@ -29,8 +29,16 @@
     font-size: 1.3rem;
 }
 
-input {
-    @apply p-2 rounded-md border bg-neutral-950;
+.input, input {
+    @apply p-2 rounded-md border bg-neutral-950 border-gray-500;
+
+    .submit:not(:disabled), &[type="submit"]:not(:disabled) {
+        @apply hover:text-white cursor-pointer;
+    }
+}
+
+*:disabled {
+    @apply pointer-events-none opacity-50 grayscale;
 }
 
 h1 {
