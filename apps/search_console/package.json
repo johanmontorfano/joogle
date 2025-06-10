@@ -7,7 +7,7 @@
         "start": "vite",
         "dev": "vite",
         "build": "vite build",
-        "build:prod": "vite build && rm -rf ../../static/search_console && mkdir ../../static/search_console && mv dist/* ../../static/search_console/.",
+        "postbuild": "./prepare_server_hosting.sh",
         "serve": "vite preview"
     },
     "license": "MIT",

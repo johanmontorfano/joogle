@@ -4,7 +4,7 @@ export function RootLayout(props: RouteSectionProps<any>) {
     return <div class="w-full min-h-dvh">
         <div class="w-full border-b border-gray-500 p-2 flex justify-between">
             <p class="logo_like">
-                <a href="/" class="logo_like hover:text-red-300">JOOGLE</a>
+                <a onClick={() => window.location.assign("/")} href="/" class="logo_like hover:text-red-300">JOOGLE</a>
                 {" "} Search Console
             </p>
             <nav class="flex items-center gap-2">

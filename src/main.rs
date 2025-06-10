@@ -49,7 +49,7 @@ lazy_static! {
     static ref QUEUE_BOT: QueueBot = QueueBot::init();
 }
 
-#[get("/search")]
+#[get("/")]
 fn search_default_ui() -> Markup {
     search_result_page("".into(), vec![])
 }
@@ -109,6 +109,7 @@ async fn main() -> () {
         ])
         .mount("/debug", routes![toggle_queue_bot])
         .mount("/static", FileServer::from(relative!("/static")))
+        .mount("/assets", FileServer::from(relative!("/static/assets")))
         .mount("/api", routes![get_index_sys_status])
         .launch()
         .await;

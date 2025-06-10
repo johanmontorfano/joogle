@@ -44,7 +44,7 @@ fn welcome() -> Markup {
     html! {
         div class="big_search_container" {
             h1 class="big_title" { "JOOGLE" }
-            form class="big_title_form" method="GET" {
+            form class="big_title_form" action="/search" method="GET" {
                 input type="text" name="q" placeholder="Type to search...";
                 input type="submit" value="GO" hidden;
             }
