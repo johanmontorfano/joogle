@@ -51,7 +51,7 @@ fn welcome() -> Markup {
         }
         footer class="stats_footer" {
             p { (indexed) " pages indexed" }
-            a href="/search/console" { "Indexing console" }
+            a href="/search/console" { "Search Console" }
         }
     }
 }
