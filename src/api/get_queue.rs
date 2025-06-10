@@ -1,19 +1,18 @@
 use std::ops::Add;
-
-use rocket::serde::json::Json;
+use rocket::serde::json::{Json, serde_json::json};
 use crate::{INDEXED_URLS_NB, QUEUE_BOT};
+use rocket::serde_derive::{Serialize, Deserialize};
 
-#[get("/get_queue")]
-pub fn get_queue() -> Json<Vec<String>> {
-    return QUEUE_BOT.get_remaining_urls().into();
+#[derive(Serialize, Deserialize)]
+struct IndexSysStatus {
+    queue_length: u32,
+    indexed_urls: u32
 }
 
-#[get("/get_queue_length")]
-pub fn get_queue_length() -> String {
-    return QUEUE_BOT.get_remaining_urls().len().to_string();
-}
-
-#[get("/get_indexed_urls")]
-pub fn get_indexed_urls() -> String {
-    return unsafe { INDEXED_URLS_NB.add(0).to_string() }
+#[get("/index_sys_status")]
+pub fn get_index_sys_status() -> Json<IndexSysStatus> {
+    json!({
+        "remaining_urls": QUEUE_BOT.get_remaining_urls().len(),
+        "queue_length": unsafe { INDEXED_URLS_NB.into<u32>() }
+    })
 }

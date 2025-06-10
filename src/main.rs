@@ -109,7 +109,7 @@ async fn main() -> () {
         ])
         .mount("/debug", routes![toggle_queue_bot])
         .mount("/static", FileServer::from(relative!("/static")))
-        .mount("/api", routes![get_queue, get_queue_length, get_indexed_urls])
+        .mount("/api", routes![get_index_sys_status])
         .launch()
         .await;
 
