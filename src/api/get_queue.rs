@@ -12,7 +12,7 @@ struct IndexSysStatus {
 #[get("/index_sys_status")]
 pub fn get_index_sys_status() -> Json<IndexSysStatus> {
     json!({
-        "remaining_urls": QUEUE_BOT.get_remaining_urls().len(),
-        "queue_length": unsafe { INDEXED_URLS_NB.into<u32>() }
+        "queue_length": QUEUE_BOT.get_remaining_urls().len(),
+        "indexed_urls": unsafe { INDEXED_URLS_NB.into<u32>() }
     })
 }
