@@ -76,3 +76,11 @@ the best one.
 
 This technique is not the best because it means that search results accuracy
 depends on the query length.
+
+## How to use?
+
+The whole repository must be cloned. To start the whole infrastructure, the
+`cargo run` command must be called.
+
+To prepare the infrastructure to run, the `prepare-apps.sh` file must be run
+to compile and set up all SPAs.
