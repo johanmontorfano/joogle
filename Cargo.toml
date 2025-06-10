@@ -11,9 +11,11 @@ experimental = ["debug", "tar_gz_sitemaps"]
 debug = []
 
 [dependencies]
+dotenv-vault = "0.1.2"
 futures = "0.3.30"
 lazy_static = "1.4.0"
 maud = { version = "0.26.0", features = ["rocket"] }
+postgrest = "1.6.0"
 r2d2 = "0.8.10"
 r2d2_sqlite = "0.24.0"
 regex = "1.10.4"
