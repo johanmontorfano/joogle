@@ -7,13 +7,17 @@ import { render } from "solid-js/web";
 import { RootLayout } from "./pages/layout";
 import { RootIndex } from "./pages";
 import { Jobs } from "./pages/jobs";
+import { Auth } from "./pages/auth";
 
 const root = document.getElementById("root");
 
 render(
-    () => <Router root={RootLayout}>
-        <Route path="/search/console" component={RootIndex} />
-        <Route path="/search/console/jobs" component={Jobs} />
+    () => <Router>
+        <Route path="/search/console" component={RootLayout}>
+            <Route path="/" component={RootIndex} />
+            <Route path="/jobs" component={Jobs} />
+        </Route>
+        <Route path="/search/console/auth" component={Auth} />
     </Router>,
     root,
 );
