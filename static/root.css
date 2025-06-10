@@ -24,6 +24,15 @@
     color: var(--text);
 }
 
+a {
+    @apply text-lg;
+    @apply hover:font-bold;
+}
+
+a.active {
+    @apply font-bold;
+}
+
 body, div, input {
     background: var(--background);
 }
