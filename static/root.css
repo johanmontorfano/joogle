@@ -24,6 +24,15 @@
     color: var(--text);
 }
 
+.logo_like {
+    font-family: IntegralCFMed;
+    font-size: 1.3rem;
+}
+
+h1 {
+    @apply text-3xl font-bold mt-2 mb-2;
+}
+
 a {
     @apply text-lg;
     @apply hover:font-bold;

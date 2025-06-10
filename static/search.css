@@ -31,11 +31,6 @@ header {
     align-items: center;
 }
 
-p.logo_like {
-    font-family: IntegralCFMed;
-    font-size: 1.3rem;
-}
-
 header input[type="text"] {
     padding: 6px;
     font-size: 1rem;
