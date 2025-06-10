@@ -17,7 +17,7 @@ maud = { version = "0.26.0", features = ["rocket"] }
 r2d2 = "0.8.10"
 r2d2_sqlite = "0.24.0"
 regex = "1.10.4"
-rocket = { version = "0.5.1", features = ["json"] }
+rocket = { version = "0.5", features = ["json"] }
 rusqlite = { version = "0.31.0", features = ["bundled"] }
 scraper = "0.19.0"
 surf = "2.3.2"
