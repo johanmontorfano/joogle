@@ -21,9 +21,18 @@
     - [X] Use robots.txt and sitemaps, allowing to only submit a domain name and
         a sitemap URL to the indexer and the bot will do everything by itself.
     - [X] Avoid indexing pages that returned a non-succesful HTTP code.
+    - [ ] Improve the search console.
+    - [ ] Add an option to make certain URLs trigger a queue by scanning useful
+        URLs referred to it. Which would allow to not have infinite indexing
+        loops with no meaningful content.
 - [ ] Search improvements
     - [ ] Implement result pagination instead of the 100's result limit.
     - [ ] Implement localization segregated search.
+    - [ ] Implement a better user experience to navigate through search results
+        - [ ] Implement page descriptions.
+        - [ ] Make the UI better.
+- [ ] Quality of Life
+    - [ ] Streamline the development and integration processes of SPAs
 - [X] Debug
     - [X] Improve the way the `routes!` macro is used with debug routes.
     - [X] Prevent compiling to production with `debug` features enabled.
