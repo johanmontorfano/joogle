@@ -29,6 +29,10 @@
     font-size: 1.3rem;
 }
 
+input {
+    @apply p-2 rounded-md border bg-neutral-950;
+}
+
 h1 {
     @apply text-3xl font-bold mt-2 mb-2;
 }
@@ -42,6 +46,6 @@ a.active {
     @apply font-bold;
 }
 
-body, div, input {
+body {
     background: var(--background);
 }
