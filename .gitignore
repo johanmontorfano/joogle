@@ -1,5 +1,8 @@
 /target
 /runtime
+/static/*.html
+/static/assets/*.js
+/static/assets/*.css
 .env
 index_db.db
 index_db.db-journal
