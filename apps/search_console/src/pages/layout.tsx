@@ -1,6 +1,7 @@
-import { A, RouteSectionProps, useNavigate } from "@solidjs/router";
+import { RouteSectionProps, useNavigate } from "@solidjs/router";
 import { IoPersonOutline } from "solid-icons/io";
 import { createSignal } from "solid-js";
+import { DomainsList } from "../components/domains_list";
 import { Popup } from "../components/popup";
 import { supabase, userData } from "../db/supabase";
 
@@ -14,10 +15,6 @@ export function RootLayout(props: RouteSectionProps<any>) {
                 <a onClick={() => window.location.assign("/")} href="/" class="logo_like hover:text-red-300">JOOGLE</a>
                 {" "} Search Console
             </p>
-            <nav class="flex items-center gap-2">
-                <A href="/search/console" activeClass="active" end>Dashboard</A>
-                <A href="/search/console/jobs" activeClass="active" end>Jobs</A>
-            </nav>
             <IoPersonOutline size={20}
                 class="cursor-pointer"
                 onClick={() => setShowProfile(true)}
@@ -25,7 +22,7 @@ export function RootLayout(props: RouteSectionProps<any>) {
         </div>
         <div class="flex flex-1 justify-self-stretch">
             <div class="p-2 min-w-[250px] max-w-[350px] w-[20vw] max-lg:hidden border-r border-gray-500">
-                OWNED DOMAINS
+                <DomainsList />
             </div>
             <div class="p-2 w-full">
             {props.children}

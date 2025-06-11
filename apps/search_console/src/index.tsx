@@ -6,8 +6,8 @@ import { Route, Router } from "@solidjs/router";
 import { render } from "solid-js/web";
 import { RootLayout } from "./pages/layout";
 import { RootIndex } from "./pages";
-import { Jobs } from "./pages/jobs";
 import { Auth } from "./pages/auth";
+import { NewDomain } from "./pages/new";
 
 const root = document.getElementById("root");
 
@@ -15,7 +15,7 @@ render(
     () => <Router>
         <Route path="/search/console" component={RootLayout}>
             <Route path="/" component={RootIndex} />
-            <Route path="/jobs" component={Jobs} />
+            <Route path="/new" component={NewDomain} />
         </Route>
         <Route path="/search/console/auth" component={Auth} />
     </Router>,
