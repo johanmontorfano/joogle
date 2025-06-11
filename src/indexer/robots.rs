@@ -95,9 +95,11 @@ impl RobotsDefinition {
     pub fn db_save(&self) -> Result<(), Box<dyn std::error::Error>> {
         domains::create_row(
             self.domain.clone(),
-            SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis(), 
+            SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis(),
+            0,
             self.uas_allow.clone(), 
-            self.uas_disallow.clone()
+            self.uas_disallow.clone(),
+            "null".to_string()
         )?;
         Ok(())
     }

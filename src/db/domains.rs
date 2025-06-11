@@ -14,8 +14,10 @@ pub fn init_table() -> Result<(), Box<dyn std::error::Error>> {
         CREATE TABLE IF NOT EXISTS domains (
             domain TEXT PRIMARY KEY,
             last_robots_txt_visit INTEGER,
+            last_ownership_check INTEGER,
             uas_allow TEXT,
-            uas_disallow TEXT
+            uas_disallow TEXT,
+            owned_by_uid TEXT
         )
     ", [])?;
     Ok(())
@@ -26,8 +28,10 @@ pub fn init_table() -> Result<(), Box<dyn std::error::Error>> {
 pub fn create_row(
     domain: String,
     last_robots_txt_visit: u128,
+    last_ownership_check: u128,
     uas_allow: HashMap<String, Vec<String>>,
-    uas_disallow: HashMap<String, Vec<String>>
+    uas_disallow: HashMap<String, Vec<String>>,
+    owned_by_uid: String
 ) -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
     let domain = sql_escape_ap(domain);
@@ -38,14 +42,18 @@ pub fn create_row(
         INSERT OR REPLACE INTO domains (
             domain,
             last_robots_txt_visit,
+            last_ownership_check,
             uas_allow,
-            uas_disallow
+            uas_disallow,
+            owned_by_uid
         )
         VALUES (
             '{domain}',
             {last_robots_txt_visit},
+            {last_ownership_check},
             '{uas_allow}',
-            '{uas_disallow}'
+            '{uas_disallow}',
+            '{owned_by_uid}'
         )
     "), [])?;
     Ok(())
@@ -54,10 +62,12 @@ pub fn create_row(
 /// Save data of a domain to the database iff a row for this domain doesn't 
 /// already exist.
 pub fn create_row_iff_empty(
-    domain: String, 
-    last_robots_txt_visit: u128, 
-    uas_allow: HashMap<String, Vec<String>>, 
-    uas_disallow: HashMap<String, Vec<String>>
+    domain: String,
+    last_robots_txt_visit: u128,
+    last_ownership_check: u128,
+    uas_allow: HashMap<String, Vec<String>>,
+    uas_disallow: HashMap<String, Vec<String>>,
+    owned_by_uid: String
 ) -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
     let domain = sql_escape_ap(domain);
@@ -65,18 +75,41 @@ pub fn create_row_iff_empty(
     let uas_disallow = sql_escape_ap(sql_encode_uas(uas_disallow));
 
     conn.execute(&format!("
-        INSERT OR IGNORE INTO domains (
+        INSERT OR REPLACE INTO domains (
             domain,
             last_robots_txt_visit,
+            last_ownership_check,
             uas_allow,
-            uas_disallow
+            uas_disallow,
+            owned_by_uid
         )
         VALUES (
             '{domain}',
             {last_robots_txt_visit},
+            {last_ownership_check},
             '{uas_allow}',
-            '{uas_disallow}'
+            '{uas_disallow}',
+            '{owned_by_uid}'
         )
+    "), [])?;
+    Ok(())
+}
+
+/// Update ownership data for a domain. If the domain does not exist, the
+/// operation is aborted. It will also modify the content of the postgres
+/// database.
+/// TODO: Update `last_ownership_check`
+pub fn update_domain_ownership_record(
+    domain: String,
+    owned_by: String
+) -> Result<(), Box<dyn std::error::Error>> {
+    let conn = DB_POOL.clone().get().unwrap();
+    let domain = sql_escape_ap(domain);
+
+    conn.execute(&format!("
+        UPDATE domains
+        SET owned_by_uid = '{owned_by}'
+        WHERE domain = '{domain}'
     "), [])?;
     Ok(())
 }

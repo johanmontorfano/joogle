@@ -2,6 +2,8 @@ use rocket::response::status;
 use trust_dns_resolver::{config::{ResolverConfig, ResolverOpts}, Resolver, TokioAsyncResolver};
 use url::Url;
 
+use crate::db::domains::update_domain_ownership_record;
+
 fn create_dns_record_for_domain_reg(domain: String, uid: String) -> String {
     format!("joogleown:{domain}>{uid}")
 }
@@ -50,11 +52,13 @@ pub async fn check_domain_ownership(domain: String, uid: String) -> String {
     let resolver = TokioAsyncResolver::tokio_from_system_conf().unwrap();
     let res = resolver.txt_lookup(domain.clone()).await.unwrap();
 
-    let ownership_rec = create_dns_record_for_domain_reg(domain, uid);
+    let ownership_rec = create_dns_record_for_domain_reg(
+        domain.clone(), uid.clone());
 
     for txt in res.iter() {
         println!("{} == {}", txt, ownership_rec);
         if txt.to_string() == ownership_rec {
+            update_domain_ownership_record(format!("%{domain}"), uid);
             return "TRUE".to_string();
         }
     }

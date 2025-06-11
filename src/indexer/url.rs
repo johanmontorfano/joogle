@@ -132,9 +132,10 @@ pub async fn index_url(url: String) -> Result<(), Box<dyn std::error::Error>> {
     // foreign keys referencing.
     db::domains::create_row_iff_empty(
         parsed_url.domain().unwrap().into(), 
-        0, 
+        0, 0,
         HashMap::new(), 
-        HashMap::new()
+        HashMap::new(),
+        "null".to_string()
     )?;
 
     // We create a record of the current url on the database for later linking.
