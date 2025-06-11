@@ -31,6 +31,7 @@ use pages::indexing::indexing_page;
 use pages::search::search_result_page;
 use pages::console::*;
 use api::get_queue::*;
+use api::ownership::*;
 use indexer::url::QueueBot;
 use indexer::sitemaps::SitemapBot;
 
@@ -119,7 +120,11 @@ async fn main() -> () {
         .mount("/debug", routes![toggle_queue_bot])
         .mount("/static", FileServer::from(relative!("/static")))
         .mount("/assets", FileServer::from(relative!("/static/assets")))
-        .mount("/api", routes![get_index_sys_status])
+        .mount("/api", routes![
+            get_index_sys_status,
+            get_domain_ownership_key,
+            check_domain_ownership
+        ])
         .launch()
         .await;
 
