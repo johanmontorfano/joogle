@@ -22,6 +22,7 @@ use std::env::args;
 use db::{local::{read_lines, write_lines}, sites::get_rows_number};
 use debug::routes::toggle_queue_bot;
 use maud::Markup;
+use postgrest::Postgrest;
 use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::Pool;
 use rocket::{form::validate::Contains, fs::*, serde::json::Json};
@@ -47,6 +48,10 @@ lazy_static! {
     };
     static ref SITEMAP_BOT: SitemapBot = SitemapBot::init();
     static ref QUEUE_BOT: QueueBot = QueueBot::init();
+}
+
+struct AppState {
+    supabase: Postgrest
 }
 
 #[get("/")]
@@ -83,7 +88,10 @@ async fn index_websites_from_robots(domain: String) -> Markup {
 
 #[rocket::main]
 async fn main() -> () {
+    let _ = dotenv_vault::dotenv();
     let cargs = args().collect::<Vec<String>>();
+    let supabase = Postgrest::new(std::env::var("SUPABASE_URL").unwrap())
+        .insert_header("apikey", std::env::var("SUPABASE_KEY").unwrap());
 
     db::sites::init_table().expect("Failed to init 'sites' table.");
     db::domains::init_table().expect("Failed to init 'domains' table.");
@@ -100,6 +108,7 @@ async fn main() -> () {
     }
 
     let _ = rocket::build()
+        .manage(AppState { supabase })
         .mount("/", routes![
             index_websites, 
             search_query, 
