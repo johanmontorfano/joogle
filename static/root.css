@@ -42,7 +42,7 @@
 }
 
 h1 {
-    @apply text-3xl font-bold mt-2 mb-2;
+    @apply text-3xl font-bold mt-2 mb-2 font-[Roboto];
 }
 
 a {
@@ -56,4 +56,12 @@ a.active {
 
 body {
     background: var(--background);
+}
+
+.step {
+    @apply flex items-center mb-2 mt-2;
+}
+
+.step > .step-count {
+    @apply text-sm mr-2 w-[30px] h-[30px] flex justify-center items-center rounded-full bg-neutral-600;
 }
