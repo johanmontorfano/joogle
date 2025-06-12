@@ -1,9 +1,9 @@
-use rocket::serde::json::{Json, serde_json::json};
+use rocket::serde::json::Json;
 use crate::{INDEXED_URLS_NB, QUEUE_BOT};
 use serde_derive::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
-struct IndexSysStatus {
+pub struct IndexSysStatus {
     queue_length: usize,
     indexed_urls: isize
 }
