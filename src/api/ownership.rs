@@ -1,9 +1,12 @@
+use std::net::SocketAddr;
+
+use chrono::{DateTime, Utc};
 use rocket::serde::json::Json;
 use serde_derive::{Deserialize, Serialize};
 use trust_dns_resolver::TokioAsyncResolver;
 use rocket_db_pools::Connection;
 use url::{ParseError, Url};
-use crate::{db::domains::update_domain_ownership_record, Pg, QUEUE_BOT};
+use crate::{db::{domains::update_domain_ownership_record, jwt_auth::AuthFromJWT}, Pg, QUEUE_BOT};
 
 #[derive(Serialize, Deserialize)]
 pub struct ResOwnershipVerification {
@@ -18,6 +21,24 @@ pub struct ResOwnershipVerificationTXTValue {
     txt_record_content: String
 }
 
+/// TODO: Search analytics such as search results appearance and clicks must
+/// be added here.
+#[derive(Serialize, Deserialize)]
+struct SiteAnalyticsData {
+    url: String,
+    title: String
+}
+
+/// This represents the data of a single domain.
+#[derive(Serialize, Deserialize)]
+pub struct ResAnalyticsData {
+    domain: String,
+    owned_by: String,
+    created_at: DateTime<Utc>,
+    last_indexed_at: DateTime<Utc>,
+    sites: Vec<SiteAnalyticsData>
+}
+
 fn create_dns_record_for_domain_reg(domain: String, uid: String) -> String {
     format!("joogleown:{domain}>{uid}")
 }
@@ -26,7 +47,7 @@ fn create_dns_record_for_domain_reg(domain: String, uid: String) -> String {
 /// user input, we want to overcome this potential issue by automatically
 /// adding a base to the URL when none are provided.
 fn extract_domain_from_str(from: String) -> Result<String, ParseError> {
-    let url = url::Url::parse(&from);
+    let url = Url::parse(&from);
 
     if let Err(err) = url {
         if err == ParseError::RelativeUrlWithoutBase {
@@ -108,4 +129,17 @@ pub async fn check_domain_ownership(
         queue_position: 0,
         ownership_verified: false
     })
+}
+
+/// Users can retrieve analytics to the domains they own. Analytics range from
+/// search analytics (search apparitions, clicks, ...) and indexing analytics.
+/// To verify ownership of a domain, the client has to provide a JWT that will
+/// be verified against Postgres content (where the data is stored)
+#[get("/domain/get_analytics?<domain>")]
+pub async fn get_domain_analytics(
+    pg: Connection<Pg>,
+    auth: AuthFromJWT,
+    domain: String
+) -> Result<Json<ResAnalyticsData>, ()> {
+    todo!("Add analytics data retrieving first");
 }
