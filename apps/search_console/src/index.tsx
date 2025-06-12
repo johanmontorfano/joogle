@@ -8,6 +8,7 @@ import { RootLayout } from "./pages/layout";
 import { RootIndex } from "./pages";
 import { Auth } from "./pages/auth";
 import { NewDomain } from "./pages/new";
+import { DomainView } from "./pages/domain";
 
 const root = document.getElementById("root");
 
@@ -20,6 +21,7 @@ render(
         <Route path="/search/console" component={RootLayout}>
             <Route path="/" component={RootIndex} />
             <Route path="/new" component={NewDomain} />
+            <Route path="/:domain" component={DomainView} />
         </Route>
         <Route path="/search/console/auth" component={Auth} />
     </Router>,
