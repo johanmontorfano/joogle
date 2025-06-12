@@ -1,10 +1,41 @@
+use rocket::serde::json::Json;
+use serde_derive::{Deserialize, Serialize};
 use trust_dns_resolver::TokioAsyncResolver;
 use rocket_db_pools::Connection;
-use url::Url;
-use crate::{db::domains::update_domain_ownership_record, Pg};
+use url::{ParseError, Url};
+use crate::{db::domains::update_domain_ownership_record, Pg, QUEUE_BOT};
+
+#[derive(Serialize, Deserialize)]
+pub struct ResOwnershipVerification {
+    queue_position: usize,
+    ownership_verified: bool
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ResOwnershipVerificationTXTValue {
+    for_domain: String,
+    for_user: String,
+    txt_record_content: String
+}
 
 fn create_dns_record_for_domain_reg(domain: String, uid: String) -> String {
     format!("joogleown:{domain}>{uid}")
+}
+
+/// Since `url::Url` may provoke the `RelativeUrlWithoutBase` error based on
+/// user input, we want to overcome this potential issue by automatically
+/// adding a base to the URL when none are provided.
+fn extract_domain_from_str(from: String) -> Result<String, ParseError> {
+    let url = url::Url::parse(&from);
+
+    if let Err(err) = url {
+        if err == ParseError::RelativeUrlWithoutBase {
+            // Hoping it will cover most cases.
+            return extract_domain_from_str(format!("http://{from}"));
+        }
+    }
+
+    return Ok(url.unwrap().domain().unwrap().to_string()); 
 }
 
 /// *First reference to the concept of domain ownership.*
@@ -29,13 +60,17 @@ fn create_dns_record_for_domain_reg(domain: String, uid: String) -> String {
 /// will validate on the postgres AND sqlite database the ownership of the
 /// domain, and indexing will start.
 #[get("/domain/get_ownership?<domain>&<uid>")]
-pub fn get_domain_ownership_key(domain: String, uid: String) -> String {
-    let url = Url::parse(&domain);
-    let url = url.unwrap();
+pub fn get_domain_ownership_key(
+    domain: String,
+    uid: String
+) -> Json<ResOwnershipVerificationTXTValue> {
+    let domain = extract_domain_from_str(domain).unwrap();
 
-    let domain: String = url.domain().unwrap().into();
-
-    create_dns_record_for_domain_reg(domain, uid)
+    Json(ResOwnershipVerificationTXTValue {
+        for_domain: domain.clone(),
+        for_user: uid.clone(),
+        txt_record_content: create_dns_record_for_domain_reg(domain, uid)
+    })
 }
 
 /// As described in the above route. Domain ownership is verified through DNS
@@ -46,11 +81,8 @@ pub async fn check_domain_ownership(
     pg: Connection<Pg>,
     domain: String,
     uid: String
-) -> String {
-    let url = Url::parse(&domain);
-    let url = url.unwrap();
-
-    let domain: String = url.domain().unwrap().into();
+) -> Json<ResOwnershipVerification> {
+    let domain = extract_domain_from_str(domain).unwrap();
 
     let resolver = TokioAsyncResolver::tokio_from_system_conf().unwrap();
     let res = resolver.txt_lookup(domain.clone()).await.unwrap();
@@ -60,9 +92,20 @@ pub async fn check_domain_ownership(
 
     for txt in res.iter() {
         if txt.to_string() == ownership_rec {
-            update_domain_ownership_record(pg, domain, uid).await.unwrap();
-            return "TRUE".to_string();
+            update_domain_ownership_record(pg, domain.clone(), uid)
+                .await.unwrap();
+            QUEUE_BOT.queue_url(vec![domain]);
+
+            let queue_position = QUEUE_BOT.get_remaining_urls().len();
+
+            return Json(ResOwnershipVerification {
+                queue_position,
+                ownership_verified: true
+            });
         }
     }
-    "FALSE".to_string()
+    Json(ResOwnershipVerification {
+        queue_position: 0,
+        ownership_verified: false
+    })
 }
