@@ -26,7 +26,7 @@ use debug::routes::toggle_queue_bot;
 use maud::Markup;
 use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::Pool;
-use rocket::{form::validate::Contains, fs::*, serde::json::Json, Config};
+use rocket::{fairing::{Fairing, Info, Kind}, form::validate::Contains, fs::*, http::Header, serde::json::Json, Config, Request, Response};
 use searching::feeling_lucky;
 use pages::indexing::indexing_page;
 use pages::search::search_result_page;
@@ -56,6 +56,35 @@ lazy_static! {
 #[derive(Database)]
 #[database("postgres")]
 struct Pg(rocket_db_pools::diesel::PgPool);
+
+struct CORS;
+
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers to responses",
+            kind: Kind::Response
+        }
+    }
+
+    async fn on_response<'r>(
+        &self,
+        _: &'r Request<'_>,
+        res: &mut Response<'r>
+    ) {
+        res.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+        res.set_header(Header::new(
+            "Access-Control-Allow-Methods",
+            "POST, GET"
+        ));
+        res.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        res.set_header(Header::new(
+            "Access-Control-Allow-Credentials",
+            "true"
+        ));
+    }
+}
 
 #[get("/")]
 fn search_default_ui() -> Markup {
@@ -114,6 +143,7 @@ async fn main() -> () {
 
     let _ = rocket::custom(pg_figment)
         .attach(Pg::init())
+        .attach(CORS)
         .mount("/", routes![
             index_websites, 
             search_query, 
