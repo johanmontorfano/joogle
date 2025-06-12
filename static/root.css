@@ -41,6 +41,7 @@ a.active {
 
 body {
      @apply bg-white dark:bg-black;
+     @apply text-black dark:text-white;
 }
 
 .step {
