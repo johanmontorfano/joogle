@@ -1,4 +1,3 @@
-use std::path::Path;
 use rocket::response::content;
 
 const SC_INDEX: &str = include_str!("../../static/sc-index.html");
