@@ -11,6 +11,10 @@ import { NewDomain } from "./pages/new";
 
 const root = document.getElementById("root");
 
+export const API_ENDPOINT = import.meta.env.PROD ? 
+    import.meta.env.VITE_JOOGLE_API_ENDPOINT :
+    import.meta.env.VITE_JOOGLE_API_ENDPOINT_DEV;
+
 render(
     () => <Router>
         <Route path="/search/console" component={RootLayout}>
