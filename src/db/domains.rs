@@ -1,5 +1,5 @@
 use std::{collections::HashMap, str::FromStr};
-use crate::{models::AddDomainOwnership, schema::domains};
+use crate::{models::AddDomainOwnership, schemas::_public::domains};
 use rocket_db_pools::{Connection};
 use uuid::Uuid;
 use crate::{sanitize::{sql_encode_uas, sql_escape_ap}, Pg, DB_POOL};
@@ -124,12 +124,10 @@ pub async fn update_domain_ownership_record(
     async {
         use rocket_db_pools::diesel::prelude::RunQueryDsl;
 
-        let out = diesel::insert_into(domains::table)
+        let _ = diesel::insert_into(domains::table)
             .values(&new_ownership)
             .execute(&mut pg)
             .await;
-
-        println!("{:?}", out);
     }.await;
 
     Ok(())
