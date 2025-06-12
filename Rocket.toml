@@ -1,0 +1,4 @@
+[default.databases.postgres]
+# Nothing here meaningful because the database URL should be an env variable
+# named PG_DIESEL_URL
+url = ".env"
