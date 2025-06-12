@@ -1,8 +1,7 @@
-use rocket::response::status;
-use trust_dns_resolver::{config::{ResolverConfig, ResolverOpts}, Resolver, TokioAsyncResolver};
+use trust_dns_resolver::TokioAsyncResolver;
+use rocket_db_pools::Connection;
 use url::Url;
-
-use crate::db::domains::update_domain_ownership_record;
+use crate::{db::domains::update_domain_ownership_record, Pg};
 
 fn create_dns_record_for_domain_reg(domain: String, uid: String) -> String {
     format!("joogleown:{domain}>{uid}")
@@ -43,7 +42,11 @@ pub fn get_domain_ownership_key(domain: String, uid: String) -> String {
 /// verification. Here, we verify the DNS entries of a given domain and
 /// validate or no the ownership of the said domain.
 #[get("/domain/check_dns_record?<domain>&<uid>")]
-pub async fn check_domain_ownership(domain: String, uid: String) -> String {
+pub async fn check_domain_ownership(
+    pg: Connection<Pg>,
+    domain: String,
+    uid: String
+) -> String {
     let url = Url::parse(&domain);
     let url = url.unwrap();
 
@@ -56,9 +59,8 @@ pub async fn check_domain_ownership(domain: String, uid: String) -> String {
         domain.clone(), uid.clone());
 
     for txt in res.iter() {
-        println!("{} == {}", txt, ownership_rec);
         if txt.to_string() == ownership_rec {
-            update_domain_ownership_record(format!("%{domain}"), uid);
+            update_domain_ownership_record(pg, domain, uid).await.unwrap();
             return "TRUE".to_string();
         }
     }

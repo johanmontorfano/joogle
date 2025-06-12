@@ -1,5 +1,8 @@
-use std::collections::HashMap;
-use crate::{sanitize::{sql_encode_uas, sql_escape_ap}, DB_POOL};
+use std::{collections::HashMap, str::FromStr};
+use crate::{models::AddDomainOwnership, schema::domains};
+use rocket_db_pools::{Connection};
+use uuid::Uuid;
+use crate::{sanitize::{sql_encode_uas, sql_escape_ap}, Pg, DB_POOL};
 
 // WARN: IMPORTANT NOTICE FOR THIS TABLE
 // The `uas_allow` and `uas_disallow` columns are stringified hashmaps, those
@@ -99,17 +102,35 @@ pub fn create_row_iff_empty(
 /// operation is aborted. It will also modify the content of the postgres
 /// database.
 /// TODO: Update `last_ownership_check`
-pub fn update_domain_ownership_record(
+pub async fn update_domain_ownership_record(
+    mut pg: Connection<Pg>,
     domain: String,
     owned_by: String
 ) -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
     let domain = sql_escape_ap(domain);
 
+    let new_ownership = AddDomainOwnership {
+        domain: domain.clone(),
+        owned_by: Uuid::from_str(&owned_by)?
+    };
+
     conn.execute(&format!("
         UPDATE domains
         SET owned_by_uid = '{owned_by}'
-        WHERE domain = '{domain}'
+        WHERE domain LIKE '%{domain}'
     "), [])?;
+
+    async {
+        use rocket_db_pools::diesel::prelude::RunQueryDsl;
+
+        let out = diesel::insert_into(domains::table)
+            .values(&new_ownership)
+            .execute(&mut pg)
+            .await;
+
+        println!("{:?}", out);
+    }.await;
+
     Ok(())
 }
