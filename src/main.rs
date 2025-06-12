@@ -17,7 +17,7 @@ mod error;
 mod data_pool;
 mod api;
 mod models;
-mod schema;
+mod schemas;
 #[cfg(feature = "debug")] mod debug;
 
 use std::env::{self, args};
