@@ -25,7 +25,7 @@ export function RootLayout(props: RouteSectionProps<any>) {
                 <DomainsList />
             </div>
             <div class="p-2 w-full dark:bg-neutral-950">
-            {props.children}
+                {props.children}
             </div>
         </div>
         <Popup show={showProfile()} onClose={() => setShowProfile(false)}>
