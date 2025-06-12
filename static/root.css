@@ -7,6 +7,7 @@
 
 * {
     color: var(--text);
+    transition: all .2s ease;
 }
 
 .logo_like {
@@ -15,7 +16,8 @@
 }
 
 .input, input {
-    @apply p-2 rounded-md border bg-neutral-200 dark:bg-neutral-950 border-gray-500;
+    @apply p-2 rounded-md border bg-neutral-100 dark:bg-neutral-950 border-gray-500;
+    @apply hover:-translate-y-[4px] hover:shadow-lg;
 
     .submit:not(:disabled), &[type="submit"]:not(:disabled) {
         @apply hover:text-white cursor-pointer;
@@ -53,9 +55,9 @@ body {
 }
 
 .step > .step-count {
-    @apply text-sm mr-2 w-[30px] h-[30px] flex justify-center items-center rounded-full bg-neutral-300 dark:bg-neutral-600;
+    @apply text-sm mr-2 w-[30px] h-[30px] flex justify-center items-center rounded-full bg-neutral-200 dark:bg-neutral-600;
 }
 
 .callout {
-    @apply p-4 mt-4 mb-4 bg-neutral-200 dark:bg-neutral-800 shadow-md w-full rounded-lg;
+    @apply p-4 mt-4 mb-4 bg-neutral-100 dark:bg-neutral-800 shadow-md w-full rounded-lg;
 }
