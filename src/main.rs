@@ -16,16 +16,17 @@ mod db;
 mod error;
 mod data_pool;
 mod api;
+mod models;
+mod schema;
 #[cfg(feature = "debug")] mod debug;
 
-use std::env::args;
+use std::env::{self, args};
 use db::{local::{read_lines, write_lines}, sites::get_rows_number};
 use debug::routes::toggle_queue_bot;
 use maud::Markup;
-use postgrest::Postgrest;
 use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::Pool;
-use rocket::{form::validate::Contains, fs::*, serde::json::Json};
+use rocket::{form::validate::Contains, fs::*, serde::json::Json, Config};
 use searching::feeling_lucky;
 use pages::indexing::indexing_page;
 use pages::search::search_result_page;
@@ -34,6 +35,7 @@ use api::get_queue::*;
 use api::ownership::*;
 use indexer::url::QueueBot;
 use indexer::sitemaps::SitemapBot;
+use rocket_db_pools::Database;
 
 static mut INDEXED_URLS_NB: isize = 0;
 
@@ -51,9 +53,9 @@ lazy_static! {
     static ref QUEUE_BOT: QueueBot = QueueBot::init();
 }
 
-struct AppState {
-    supabase: Postgrest
-}
+#[derive(Database)]
+#[database("postgres")]
+struct Pg(rocket_db_pools::diesel::PgPool);
 
 #[get("/")]
 fn search_default_ui() -> Markup {
@@ -91,8 +93,10 @@ async fn index_websites_from_robots(domain: String) -> Markup {
 async fn main() -> () {
     let _ = dotenv_vault::dotenv();
     let cargs = args().collect::<Vec<String>>();
-    let supabase = Postgrest::new(std::env::var("SUPABASE_URL").unwrap())
-        .insert_header("apikey", std::env::var("SUPABASE_KEY").unwrap());
+    let pg_figment = Config::figment().merge((
+        "databases.postgres.url",
+        env::var("PG_DIESEL_URL").expect("No Postgres URL specified.")
+    ));
 
     db::sites::init_table().expect("Failed to init 'sites' table.");
     db::domains::init_table().expect("Failed to init 'domains' table.");
@@ -108,8 +112,8 @@ async fn main() -> () {
         QUEUE_BOT.queue_url(rurls);
     }
 
-    let _ = rocket::build()
-        .manage(AppState { supabase })
+    let _ = rocket::custom(pg_figment)
+        .attach(Pg::init())
         .mount("/", routes![
             index_websites, 
             search_query, 
