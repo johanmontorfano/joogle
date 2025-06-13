@@ -91,7 +91,18 @@ depends on the query length.
 ## How to use?
 
 The whole repository must be cloned. To start the whole infrastructure, the
-`cargo run` command must be called.
+`start.sh` script must be called.
 
 To prepare the infrastructure to run, the `prepare-apps.sh` file must be run
 to compile and set up all SPAs.
+
+### Environment Variables
+
+The following environment variables have to be provided:
+
+- PG_DIESEL_URL: The `postgresql://` url to the database.
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_KEY
+- VITE_JOOGLE_API_ENDPOINT: Address of Joogle
+- VITE_JOOGLE_API_ENDPOINT_DEV: Address of Joogle in dev contexts
+- JWT_SECRET, VITE_JWT_SECRET: Secret used to verify JWT
