@@ -6,7 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 use trust_dns_resolver::TokioAsyncResolver;
 use rocket_db_pools::Connection;
 use url::{ParseError, Url};
-use crate::{db::{domains::update_domain_ownership_record, jwt_auth::AuthFromJWT}, Pg, QUEUE_BOT};
+use crate::{db::{domains::{get_domain_ownership_record, update_domain_ownership_record}, jwt_auth::AuthFromJWT, sites::{get_all_sites_records_of_a_domain, SiteRecord}}, Pg, QUEUE_BOT};
 
 #[derive(Serialize, Deserialize)]
 pub struct ResOwnershipVerification {
@@ -21,22 +21,13 @@ pub struct ResOwnershipVerificationTXTValue {
     txt_record_content: String
 }
 
-/// TODO: Search analytics such as search results appearance and clicks must
-/// be added here.
-#[derive(Serialize, Deserialize)]
-struct SiteAnalyticsData {
-    url: String,
-    title: String
-}
-
 /// This represents the data of a single domain.
 #[derive(Serialize, Deserialize)]
 pub struct ResAnalyticsData {
     domain: String,
     owned_by: String,
     created_at: DateTime<Utc>,
-    last_indexed_at: DateTime<Utc>,
-    sites: Vec<SiteAnalyticsData>
+    indexed_pages: Vec<SiteRecord>
 }
 
 fn create_dns_record_for_domain_reg(domain: String, uid: String) -> String {
@@ -135,11 +126,44 @@ pub async fn check_domain_ownership(
 /// search analytics (search apparitions, clicks, ...) and indexing analytics.
 /// To verify ownership of a domain, the client has to provide a JWT that will
 /// be verified against Postgres content (where the data is stored)
+///
+/// Indexing analytics relates to how many pages under a domain have been
+/// indexed, if robots file or sitemap have been found. This data can directly
+/// be found by retrieving every entry for a domain in the sites table.
+///
+/// Search analytics relates to the number of clicks and apparition in search
+/// results for a site. 
+/// TODO: Determine how search analytics will work.
 #[get("/domain/get_analytics?<domain>")]
 pub async fn get_domain_analytics(
     pg: Connection<Pg>,
     auth: AuthFromJWT,
     domain: String
 ) -> Result<Json<ResAnalyticsData>, ()> {
-    todo!("Add analytics data retrieving first");
+    if !auth.verified {
+        return Err(());
+    }
+
+    // We check if the provided user ID owns the domain it tries to get.
+    let record = get_domain_ownership_record(pg, domain.clone()).await;
+
+    if record.is_err() {
+        return Err(());
+    }
+
+    let record = record.unwrap();
+
+    if record.owned_by.to_string() != auth.from_claims.user_id {
+        return Err(());
+    }
+
+    if let Ok(pages) = get_all_sites_records_of_a_domain(domain.clone()) {
+        return Ok(Json(ResAnalyticsData {
+            domain: domain,
+            owned_by: auth.from_claims.user_id,
+            created_at: record.created_at,
+            indexed_pages: pages
+        }));
+    }
+    Err(())
 }
