@@ -1,8 +1,21 @@
+use serde_derive::{Deserialize, Serialize};
 use url::Url;
-
 use crate::indexer::localization::Localization;
 use crate::DB_POOL;
 use crate::sanitize::sql_escape_ap;
+
+/// Refers to an indexed page
+/// NOTE: When moving from SQL to Diesel + Pg, please, PLEASE refer to pages
+/// instead of sites.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct SiteRecord {
+    pub url: String,
+    pub domain: String,
+    pub title: String,
+    pub description: String,
+    pub ttr: f64,
+    pub loc: String
+}
 
 /// Initialize this table if it does not exists on the database.
 pub fn init_table() -> Result<(), Box<dyn std::error::Error>> {
@@ -46,14 +59,15 @@ pub fn new_url_record(
     let conn = DB_POOL.clone().get().unwrap();
     let url_obj = Url::parse(&url)?;
     let domain = sql_escape_ap(url_obj.domain().unwrap().to_string());
+    let url = sql_escape_ap(url);
     let title = sql_escape_ap(title);
     let description = sql_escape_ap(description);
 
-    conn.execute("DELETE FROM sites WHERE url = ?1", [url.clone()])?;
-    conn.execute("
-        INSERT INTO sites (url, domain, title, description, ttr, loc) 
-        VALUES (?1, ?2, ?3, ?4, 0.0, 'en')
-    ", [url, domain, title, description])?;
+    conn.execute(&format!("DELETE FROM sites WHERE url = '{url}'"), [])?;
+    conn.execute(&format!("
+            INSERT INTO sites (url, domain, title, description, ttr, loc) 
+            VALUES ('{url}', '{domain}', '{title}', '{description}', 0.0, 'en')
+    "), [])?;
     Ok(())
 }
 
@@ -62,10 +76,10 @@ pub fn update_site_ttr(
     url: &String, ttr: f64
 ) -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
+    let url = sql_escape_ap(url.into());
 
     conn.execute(
-        "UPDATE sites SET ttr = ?1 WHERE url = ?2",
-        params![ttr, url]
+        &format!("UPDATE sites SET ttr = {ttr} WHERE url = '{url}'"), []
     )?;
     Ok(())
 }
@@ -75,10 +89,47 @@ pub fn update_site_loc(
     url: &String, loc: Localization
 ) -> Result<(), Box<dyn std::error::Error>> {
     let conn = DB_POOL.clone().get().unwrap();
+    let url = sql_escape_ap(url.into());
 
     conn.execute(
-        "UPDATE sites SET loc = ?1 WHERE url = ?2",
-        params![loc.0, url]
+        &format!("UPDATE sites SET loc = '{}' WHERE url = '{url}'", loc.0), []
     )?;
     Ok(())
+}
+
+pub fn get_all_sites_records_of_a_domain(
+    domain: String
+) -> Result<Vec<SiteRecord>, Box<dyn std::error::Error>> {
+    let conn = DB_POOL.clone().get().unwrap();
+    
+    let mut select = conn.prepare(&format!("
+        SELECT *
+        FROM sites
+        WHERE domain = '{domain}'
+    ")).unwrap();
+
+    let results = select.query_map([], |row| Ok((
+        row.get::<usize, String>(0).unwrap(),
+        row.get::<usize, String>(1).unwrap(),
+        row.get::<usize, String>(2).unwrap(),
+        row.get::<usize, String>(3).unwrap(),
+        row.get::<usize, f64>(4).unwrap(),
+        row.get::<usize, String>(5).unwrap()
+    ))).unwrap();
+
+    let mut out: Vec<SiteRecord> = vec![];
+
+    results.for_each(|r| {
+        let r = r.unwrap();
+
+        out.push(SiteRecord {
+            url: r.0,
+            domain: r.1,
+            title: r.2,
+            description: r.3,
+            ttr: r.4,
+            loc: r.5
+        });
+    });
+    Ok(out)
 }

@@ -1,8 +1,9 @@
 use std::{collections::HashMap, str::FromStr};
-use crate::{models::AddDomainOwnership, schemas::_public::domains};
-use rocket_db_pools::{Connection};
+use crate::{models::{AddDomainOwnership, DomainOwnershipRecord}, schemas::_public::domains};
+use rocket_db_pools::Connection;
 use uuid::Uuid;
 use crate::{sanitize::{sql_encode_uas, sql_escape_ap}, Pg, DB_POOL};
+use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 
 // WARN: IMPORTANT NOTICE FOR THIS TABLE
 // The `uas_allow` and `uas_disallow` columns are stringified hashmaps, those
@@ -131,4 +132,33 @@ pub async fn update_domain_ownership_record(
     }.await;
 
     Ok(())
+}
+
+pub async fn get_domain_ownership_record(
+    mut pg: Connection<Pg>,
+    domain: String
+) -> Result<DomainOwnershipRecord, ()> {
+    use rocket_db_pools::diesel::prelude::RunQueryDsl;
+
+    let domains_list = domains::table
+        .filter(domains::domain.eq(domain))
+        .select(DomainOwnershipRecord::as_select())
+        .load::<DomainOwnershipRecord>(&mut pg)
+        .await;
+
+    if domains_list.is_err() {
+        return Err(());
+    }
+
+    let domains_list = domains_list.unwrap();
+    let domains_list = domains_list.iter().collect::<Vec<_>>();
+
+    if domains_list.len() != 1 {
+        return Err(());
+    }
+
+    let out = domains_list.get(0).unwrap();
+
+    // TODO: wtf do I have to .clone().clone() ??????
+    Ok((*out).clone())
 }

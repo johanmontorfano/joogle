@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 /// WARN: *_id are Uuid but cannot be serialized, hence provided as String.
 #[derive(Serialize, Deserialize, Debug)]
-struct AuthClaims {
+pub struct AuthClaims {
     pub email: String,
     pub user_id: String,
     pub session_id: String
@@ -18,8 +18,8 @@ struct AuthClaims {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AuthFromJWT {
-    from_claims: AuthClaims,
-    verified: bool
+    pub from_claims: AuthClaims,
+    pub verified: bool
 }
 
 /// This function will authenticate a user from a JWT and the content of the
@@ -75,7 +75,6 @@ impl<'r> FromRequest<'r> for AuthFromJWT {
         let uuid = Uuid::from_str(&auth_claims.user_id).unwrap();
 
         // user and session are joined and retrieved for this user
-
         let user_and_session = sessions::table
             .inner_join(users::table)
             .filter(users::id.eq(uuid))
