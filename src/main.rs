@@ -157,7 +157,8 @@ async fn main() -> () {
         .mount("/api", routes![
             get_index_sys_status,
             get_domain_ownership_key,
-            check_domain_ownership
+            check_domain_ownership,
+            get_domain_analytics
         ])
         .launch()
         .await;
