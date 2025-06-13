@@ -1,0 +1,29 @@
+{
+    "name": "search-console",
+    "version": "0.0.0",
+    "description": "",
+    "type": "module",
+    "scripts": {
+        "start": "vite",
+        "dev": "vite",
+        "build": "vite build",
+        "postbuild": "./prepare_server_hosting.sh",
+        "serve": "vite preview"
+    },
+    "license": "MIT",
+    "devDependencies": {
+        "autoprefixer": "^10.4.21",
+        "postcss": "^8.4.49",
+        "tailwindcss": "^3.4.15",
+        "vite": "^6.0.0",
+        "vite-plugin-solid": "^2.11.6"
+    },
+    "dependencies": {
+        "@solidjs/router": "^0.15.1",
+        "@supabase/supabase-js": "^2.50.0",
+        "jose": "^6.0.11",
+        "solid-icons": "^1.1.0",
+        "solid-js": "^1.9.5",
+        "solid-spinner": "^0.2.0"
+    }
+}

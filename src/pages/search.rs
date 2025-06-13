@@ -1,5 +1,4 @@
-use maud::{html, Markup, DOCTYPE};
-
+use maud::{Markup, DOCTYPE};
 use crate::INDEXED_URLS_NB;
 
 /// Renders the search result page. To avoid too much logic overhead, we
@@ -16,6 +15,7 @@ pub fn search_result_page(
             (DOCTYPE)
             head {
                 meta charset="utf-8";
+                link rel="stylesheet" href="/static/root.css";
                 link rel="stylesheet" href="/static/search.css";
                 title { 
                     @if !is_dummy {
@@ -28,7 +28,7 @@ pub fn search_result_page(
                 @if is_dummy {
                     (welcome())
                 } @else {
-                    (results(res))
+                    (results(query, res))
                 }
             }
         }
@@ -44,24 +44,27 @@ fn welcome() -> Markup {
     html! {
         div class="big_search_container" {
             h1 class="big_title" { "JOOGLE" }
-            form class="big_title_form" action="search" method="GET" {
+            form class="big_title_form" action="/search" method="GET" {
                 input type="text" name="q" placeholder="Type to search...";
                 input type="submit" value="GO" hidden;
             }
         }
         footer class="stats_footer" {
             p { (indexed) " pages indexed" }
-            a href="/search/console" { "Indexing console" }
+            a href="/search/console" { "Search Console" }
         }
     }
 }
 
-fn results(res: Vec<(String, String, String)>) -> Markup {
+fn results(query: String, res: Vec<(String, String, String)>) -> Markup {
     html! {
         header {
             p class="logo_like" { "JOOGLE" }
             form class="search_header" {
-                input type="text" name="q" placeholder="Go on, search...";
+                input type="text" method="GET" 
+                    value=(query)
+                    name="q"
+                    placeholder="Go on, search...";
                 input type="submit" value="GO" hidden;
             }
         }

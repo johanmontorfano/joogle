@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400&display=swap');
+
+@font-face {
+    font-family: IntegralCFMed;
+    src: url(/assets/integralcf_med.otf);
+}
+
+* {
+    color: var(--text);
+    transition: all .2s ease;
+}
+
+.logo_like {
+    font-family: IntegralCFMed;
+    font-size: 1.3rem;
+}
+
+.input, input {
+    @apply p-2 rounded-md border bg-neutral-100 dark:bg-neutral-950 border-gray-500;
+    @apply hover:-translate-y-[4px] hover:shadow-lg;
+
+    .submit:not(:disabled), &[type="submit"]:not(:disabled) {
+        @apply hover:text-white cursor-pointer;
+    }
+}
+
+*:disabled {
+    @apply pointer-events-none opacity-50 grayscale;
+}
+
+h1 {
+    @apply text-3xl font-bold mt-2 mb-2 font-[Roboto];
+}
+
+a {
+    @apply text-lg;
+    @apply hover:font-bold;
+}
+
+a.active {
+    @apply font-bold;
+}
+
+body {
+     @apply bg-white dark:bg-neutral-900;
+     @apply text-black dark:text-white;
+}
+
+.code {
+    @apply p-4 mt-4 mb-4 text-lg font-mono bg-neutral-200 dark:bg-neutral-800 shadow-md w-full rounded-lg;
+}
+
+.step {
+    @apply flex items-center mb-2 mt-2;
+}
+
+.step > .step-count {
+    @apply text-sm mr-2 w-[30px] h-[30px] flex justify-center items-center rounded-full bg-neutral-200 dark:bg-neutral-600;
+}
+
+.callout {
+    @apply p-4 mt-4 mb-4 bg-neutral-100 dark:bg-neutral-800 shadow-md w-full rounded-lg;
+}
