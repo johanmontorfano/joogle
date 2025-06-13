@@ -1,7 +1,5 @@
-use std::net::SocketAddr;
-
 use chrono::{DateTime, Utc};
-use rocket::serde::json::Json;
+use rocket::{http::Status, response::status, serde::json::Json};
 use serde_derive::{Deserialize, Serialize};
 use trust_dns_resolver::TokioAsyncResolver;
 use rocket_db_pools::Connection;
@@ -166,4 +164,10 @@ pub async fn get_domain_analytics(
         }));
     }
     Err(())
+}
+
+// TODO: make something meaningful of this
+#[options("/domain/get_analytics?<domain>")]
+pub async fn get_domain_analytics_preflight(domain: String) -> Status {
+    Status::Accepted
 }

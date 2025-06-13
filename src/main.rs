@@ -78,7 +78,10 @@ impl Fairing for CORS {
             "Access-Control-Allow-Methods",
             "POST, GET"
         ));
-        res.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        res.set_header(Header::new(
+            "Access-Control-Allow-Headers",
+            "Authorization, *"
+        ));
         res.set_header(Header::new(
             "Access-Control-Allow-Credentials",
             "true"
@@ -158,7 +161,8 @@ async fn main() -> () {
             get_index_sys_status,
             get_domain_ownership_key,
             check_domain_ownership,
-            get_domain_analytics
+            get_domain_analytics,
+            get_domain_analytics_preflight
         ])
         .launch()
         .await;
