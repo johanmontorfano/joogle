@@ -6,6 +6,8 @@
 
 - [X] Working indexing and searching.
 - [ ] Use a faster, less prone to failure and concurrent database.
+    - [X] For authentication
+    - [ ] For indexing
 - [X] Save queued URLs in a file on exit to recover indexing on restart.
 - [ ] Indexing improvements
     - [X] Auto-queueing of URLs found on webpages.
@@ -21,7 +23,7 @@
     - [X] Use robots.txt and sitemaps, allowing to only submit a domain name and
         a sitemap URL to the indexer and the bot will do everything by itself.
     - [X] Avoid indexing pages that returned a non-succesful HTTP code.
-    - [ ] Improve the search console.
+    - [X] Improve the search console.
     - [ ] Add an option to make certain URLs trigger a queue by scanning useful
         URLs referred to it. Which would allow to not have infinite indexing
         loops with no meaningful content.
