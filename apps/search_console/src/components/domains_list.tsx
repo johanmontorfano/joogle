@@ -15,10 +15,12 @@ export function DomainsList() {
         <p class="font-semibold">
             Owned domains
         </p>
-        <For each={domains()} fallback={<p>No domain owned :(</p>}>
-            {d => <A href={`/search/console/${d.domain}`}>
-                {d.domain}
-            </A>}
-        </For> 
+        <div class="flex flex-col">
+            <For each={domains()} fallback={<p>No domain owned :(</p>}>
+                {d => <A href={`/search/console/${d.domain}`}>
+                    {d.domain}
+                </A>}
+            </For> 
+        </div>
     </div>
 }
