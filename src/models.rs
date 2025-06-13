@@ -34,11 +34,23 @@ impl FromSql<_auth::sql_types::AalLevel, Pg> for AalLevel {
         }
     }
 }
-#[derive(Insertable)]
+
+#[derive(Insertable, Selectable, Queryable, PartialEq, Debug)]
 #[diesel(table_name = _public::domains)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct AddDomainOwnership {
     pub domain: String,
     pub owned_by: Uuid,
+}
+
+#[derive(Insertable, Selectable, Queryable, PartialEq, Debug, Clone)]
+#[diesel(table_name = _public::domains)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct DomainOwnershipRecord {
+    pub id: Uuid,
+    pub created_at: DateTime<Utc>,
+    pub owned_by: Uuid,
+    pub domain: String,
 }
 
 #[derive(Selectable, Queryable, Identifiable, PartialEq, Debug)]
