@@ -105,7 +105,7 @@ pub fn get_all_sites_records_of_a_domain(
     let mut select = conn.prepare(&format!("
         SELECT *
         FROM sites
-        WHERE domain = '{domain}'
+        WHERE domain LIKE '%{domain}'
     ")).unwrap();
 
     let results = select.query_map([], |row| Ok((
