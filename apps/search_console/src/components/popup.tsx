@@ -10,8 +10,8 @@ export function Popup(props: {
     return <Portal>
         <Show when={props.show}>
             <div class="flex items-center justify-center w-full h-dvh absolute top-0 left-0 backdrop-blur-md">
-                <div class="border shadow-md border-neutral-600 bg-neutral-800 rounded-lg w-full max-w-[400px]">
-                    <div class="flex justify-end w-full p-2 border-b border-gray-500">
+                <div class="border shadow-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 rounded-lg w-full max-w-[400px]">
+                    <div class="flex justify-end w-full p-2 border-b border-neutral-300 dark:border-gray-500">
                         <IoCloseOutline onClick={props.onClose} 
                             size={24}
                             class="cursor-pointer"
